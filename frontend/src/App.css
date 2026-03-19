@@ -1,0 +1,49 @@
+/**
+ * App-specific styles  *
+ * Space-themed satellite collision avoidance system
+ */
+
+/* Container utilities */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* Backdrop blur utilities */
+.backdrop-blur-sm {
+  backdrop-filter: blur(4px);
+}
+
+/* Custom animations */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Space-themed gradient text */
+.gradient-text {
+  background: linear-gradient(to right, #22d3ee, #3b82f6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Space card hover effect */
+.space-card {
+  transition: all 0.3s ease;
+}
+
+.space-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(34, 211, 238, 0.2);
+}
+

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Collision Avoidance AI System</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .card { border: 1px solid #e5e7eb; border-radius: 0.5rem; background: white; }
+        .metric-label { color: #6b7280; font-size: 0.875rem; font-weight: 600; }
+        .metric-value { font-size: 1.25rem; font-weight: bold; color: #111827; margin-top: 0.25rem; }
+        .button-primary { background: #3b82f6; color: white; padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer; border: none; }
+        .button-primary:hover { background: #2563eb; }
+        .status { padding: 0.75rem 1rem; border-radius: 0.25rem; margin: 0.5rem 0; }
+        .status-wait { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .status-commit { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-force { background: #fee2e2; color: #7f1d1d; border: 1px solid #fca5a5; }
+        .loading { opacity: 0.6; pointer-events: none; }
+        .error { background: #fee2e2; color: #7f1d1d; padding: 0.75rem 1rem; border-radius: 0.25rem; margin: 0.5rem 0; border: 1px solid #fca5a5; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+    <script src="app.js"></script>
+</body>
+</html>
