@@ -1,0 +1,56 @@
+.chartsPanel {
+  grid-column: 2;
+  grid-row: 3;
+  pointer-events: auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid rgba(88, 140, 255, 0.3);
+  background: linear-gradient(180deg, rgba(5, 12, 30, 0.9), rgba(7, 14, 34, 0.9));
+}
+
+.chartCard {
+  border-right: 1px solid rgba(88, 140, 255, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.chartCard:last-child {
+  border-right: none;
+}
+
+.chartCard h3 {
+  margin: 0;
+  padding: 10px 12px 6px;
+  border-bottom: 1px solid rgba(88, 140, 255, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  font-family: var(--display-font);
+  font-size: 0.54rem;
+  color: var(--text-dim);
+}
+
+.chartBody {
+  flex: 1;
+  min-height: 170px;
+  padding: 7px;
+}
+
+@media (max-width: 1100px) {
+  .chartsPanel {
+    grid-column: 1;
+    grid-row: 5;
+    grid-template-columns: 1fr;
+    border: 1px solid rgba(88, 140, 255, 0.3);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .chartCard {
+    border-right: none;
+    border-bottom: 1px solid rgba(88, 140, 255, 0.24);
+  }
+
+  .chartCard:last-child {
+    border-bottom: none;
+  }
+}

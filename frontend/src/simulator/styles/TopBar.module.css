@@ -1,0 +1,146 @@
+.topBar {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 18px;
+  background: linear-gradient(90deg, rgba(5, 12, 29, 0.96), rgba(6, 17, 45, 0.72), rgba(5, 12, 29, 0.96));
+  border-bottom: 1px solid rgba(93, 147, 255, 0.3);
+  backdrop-filter: blur(14px);
+}
+
+.logoWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logoDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 14px var(--neon-cyan);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+.logoText {
+  font-family: var(--display-font);
+  font-size: 1rem;
+  letter-spacing: 0.28em;
+  color: var(--neon-cyan);
+}
+
+.navTabs {
+  display: flex;
+  gap: 2px;
+}
+
+.navTab {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--display-font);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 8px 13px;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.navTab:hover,
+.activeTab {
+  color: var(--neon-cyan);
+  border-bottom-color: var(--neon-cyan);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.syncText {
+  font-family: var(--mono-font);
+  color: var(--text-dim);
+  font-size: 0.65rem;
+}
+
+.scaleWrap {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono-font);
+  color: var(--text-dim);
+  font-size: 0.65rem;
+}
+
+.scaleWrap input {
+  width: 80px;
+  accent-color: var(--neon-cyan);
+}
+
+.scaleValue {
+  min-width: 38px;
+  color: var(--neon-cyan);
+  font-size: 0.84rem;
+}
+
+.topButton {
+  border: 1px solid rgba(83, 143, 255, 0.35);
+  background: rgba(31, 57, 103, 0.3);
+  color: var(--neon-blue);
+  font-family: var(--display-font);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.topButton:hover,
+.topButtonActive {
+  background: linear-gradient(90deg, rgba(58, 224, 255, 0.8), rgba(96, 146, 255, 0.92));
+  border-color: rgba(126, 185, 255, 0.95);
+  color: #041425;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.45;
+    transform: scale(0.72);
+  }
+}
+
+@media (max-width: 1100px) {
+  .topBar {
+    grid-column: 1;
+    grid-row: 1;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+    border: 1px solid rgba(88, 140, 255, 0.3);
+    border-radius: 16px;
+  }
+
+  .navTabs {
+    overflow-x: auto;
+  }
+
+  .controls {
+    flex-wrap: wrap;
+  }
+}

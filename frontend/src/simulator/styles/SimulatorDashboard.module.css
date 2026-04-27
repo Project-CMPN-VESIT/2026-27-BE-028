@@ -1,0 +1,165 @@
+.simulatorApp {
+  position: relative;
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, rgba(51, 93, 204, 0.22), transparent 48%),
+    radial-gradient(circle at 75% 20%, rgba(144, 88, 255, 0.2), transparent 40%),
+    linear-gradient(180deg, #050b1e 0%, #02050f 100%);
+  color: var(--text-main);
+  font-family: var(--body-font);
+  overflow: hidden;
+}
+
+.scanGrid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image: linear-gradient(rgba(83, 137, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(83, 137, 255, 0.06) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+}
+
+.uiGrid {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 340px;
+  grid-template-rows: 62px minmax(0, 1fr) 280px;
+  min-height: 100vh;
+  pointer-events: none;
+}
+
+.centerOverlay {
+  grid-column: 2;
+  grid-row: 2;
+  position: relative;
+  pointer-events: none;
+}
+
+.eventCard {
+  margin: 18px;
+  max-width: 430px;
+  background: linear-gradient(135deg, rgba(4, 12, 30, 0.78), rgba(20, 35, 73, 0.2));
+  border: 1px solid rgba(89, 149, 255, 0.5);
+  border-radius: 14px;
+  padding: 14px 16px;
+  backdrop-filter: blur(16px);
+  animation: titleShift 8s ease-in-out infinite;
+}
+
+.eventCard h1 {
+  margin: 0;
+  font-size: clamp(1.3rem, 2vw, 2rem);
+  line-height: 1.2;
+  letter-spacing: 0.05em;
+  color: #ffffff;
+  text-transform: uppercase;
+  font-family: var(--display-font);
+}
+
+.eventCard p {
+  margin: 8px 0 0;
+  border-left: 3px solid var(--neon-cyan);
+  padding-left: 10px;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  color: var(--neon-cyan);
+  font-family: var(--mono-font);
+}
+
+.telemetryOverlay {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.telemetryGroup {
+  display: grid;
+  gap: 7px;
+}
+
+.telemetryGroup p {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.telemetryGroup span {
+  min-width: 80px;
+  font-family: var(--mono-font);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.telemetryGroup strong {
+  font-family: var(--mono-font);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text-main);
+  text-shadow: 0 0 18px rgba(59, 227, 255, 0.45);
+}
+
+@keyframes titleShift {
+  0%,
+  94%,
+  100% {
+    transform: translateX(0);
+  }
+
+  95% {
+    transform: translateX(-3px);
+  }
+
+  97% {
+    transform: translateX(2px);
+  }
+}
+
+@media (max-width: 1280px) {
+  .uiGrid {
+    grid-template-columns: 280px minmax(0, 1fr) 300px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .simulatorApp {
+    overflow: auto;
+    min-height: 100%;
+  }
+
+  .uiGrid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    gap: 12px;
+    padding: 12px;
+    min-height: auto;
+  }
+
+  .centerOverlay {
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 55vh;
+    border: 1px solid rgba(88, 136, 255, 0.3);
+    border-radius: 16px;
+    background: rgba(8, 16, 39, 0.28);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+  }
+
+  .telemetryOverlay {
+    position: static;
+    margin: 16px;
+    background: rgba(8, 18, 42, 0.55);
+    border: 1px solid rgba(88, 136, 255, 0.26);
+    border-radius: 12px;
+    padding: 12px;
+  }
+}
