@@ -2,22 +2,19 @@ import styles from '../styles/DecisionPanel.module.css';
 
 const modelLabels = {
   lstm: 'LSTM',
+  gru: 'GRU',
   tcn: 'TCN',
-  xgboost: 'XGB'
+  transformer: 'Transformer',
+  patchtst: 'PatchTST',
+  xgboost: 'XGBoost'
 };
+
+const modelOrder = ['lstm', 'gru', 'tcn', 'transformer', 'patchtst', 'xgboost'];
 
 const featureIndex = {
   deltaVRequired: 15,
   fuelRemaining: 16
 };
-
-const modelOrder = ['lstm', 'tcn', 'xgboost'];
-
-const caseOrder = [
-  { key: 'case1', label: 'Case 1 (Neural)' },
-  { key: 'case2', label: 'Case 2 (Neuro-symbolic)' },
-  { key: 'case3', label: 'Case 3 (Masked Safe)' }
-];
 
 function decisionTone(action) {
   if (action === 'FORCE_COMMIT') {
@@ -30,7 +27,7 @@ function decisionTone(action) {
 }
 
 function decisionLabel(decision) {
-  return Number(decision) === 1 ? 'COMMIT' : 'WAIT';
+  return Number(decision) === 1 || decision === 'COMMIT' ? 'COMMIT' : 'WAIT';
 }
 
 function numberOrZero(value) {
@@ -51,7 +48,7 @@ function clamp01(value) {
 }
 
 function forecastFromDecision(decision, probCommit, baseFuel, baseDeltaV) {
-  const commit = Number(decision) === 1;
+  const commit = Number(decision) === 1 || decision === 'COMMIT';
   const confidence = clamp01(probCommit);
   const expectedDeltaV = commit ? baseDeltaV : baseDeltaV * confidence;
 
@@ -68,16 +65,16 @@ function formatProbability(value) {
 
 function getReasoningText(finalDecision, isInfeasible, confidence) {
   const decisionText = finalDecision === 'COMMIT' || finalDecision === 'FORCE_COMMIT'
-    ? 'Collision probability is rising rapidly as TCA approaches.'
-    : 'Risk remains comparatively contained within the current maneuver window.';
+    ? 'Collision probability exceeds threshold as TCA approaches.'
+    : 'Risk remains contained within the current maneuver window.';
 
   const feasibilityText = isInfeasible
-    ? 'The feasibility window is shrinking and the current step is constrained.'
-    : 'Feasibility remains acceptable for the current step.';
+    ? 'Physical feasibility is constrained; symbolic safety shield is active.'
+    : 'Orbital parameters satisfy physical feasibility constraints.';
 
   const confidenceText = Number.isFinite(confidence)
-    ? `Model confidence is ${Math.round(confidence * 100)}%, supporting the current recommendation.`
-    : 'Model confidence is still being resolved from the backend result.';
+    ? `Consensus confidence is ${Math.round(confidence * 100)}%.`
+    : '';
 
   return `${decisionText} ${feasibilityText} ${confidenceText}`;
 }
@@ -87,73 +84,59 @@ function buildScenarioTags(finalDecision, isInfeasible, scenarioInfo, notice) {
 
   if (finalDecision === 'COMMIT' || finalDecision === 'FORCE_COMMIT') {
     tags.push({ label: 'PoC Threshold Exceeded', tone: 'critical' });
-    tags.push({ label: 'Time to TCA < 1hr', tone: 'warn' });
+    tags.push({ label: 'Maneuver Required', tone: 'warn' });
   } else {
     tags.push({ label: 'Monitor Trend', tone: 'ok' });
-    tags.push({ label: 'Continue Sampling', tone: 'warn' });
+    tags.push({ label: 'Safe State', tone: 'ok' });
   }
 
   if (isInfeasible) {
-    tags.push({ label: 'Feasibility Shrinking', tone: 'critical' });
+    tags.push({ label: 'Symbolic Shield Active', tone: 'critical' });
   }
 
   if (scenarioInfo?.datasetDecision) {
     tags.push({ label: `Dataset: ${scenarioInfo.datasetDecision}`, tone: 'ok' });
   }
 
-  if (notice) {
-    tags.push({ label: 'Prediction Mismatch', tone: 'warn' });
-  }
-
   return tags.slice(0, 4);
 }
 
 function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, notice, error }) {
-  const timesteps = result?.sequence?.timesteps ?? [];
-  const finalDecision = result?.final_recommendation?.decision;
-  const confidence = Number(result?.final_recommendation?.confidence);
+  const timesteps = result?.timesteps ?? result?.sequence?.timesteps ?? result?.timesteps_sequence?.timesteps ?? [];
+  const finalDecision = result?.final_recommendation?.decision ?? result?.decision;
+  const confidence = Number(result?.final_recommendation?.confidence ?? result?.confidence);
   const activeStep = timesteps[currentStep] ?? null;
   const activeSequenceRow = Array.isArray(sequence?.[currentStep]) ? sequence[currentStep] : [];
-  const baseDeltaV = numberOrZero(result?.delta_v_forecast ?? activeSequenceRow[featureIndex.deltaVRequired]);
-  const baseFuel = numberOrZero(activeSequenceRow[featureIndex.fuelRemaining]);
+  const baseDeltaV = numberOrZero(result?.delta_v_forecast ?? activeSequenceRow[featureIndex.deltaVRequired] ?? 1.25);
+  const baseFuel = numberOrZero(result?.fuel_remaining ?? activeSequenceRow[featureIndex.fuelRemaining] ?? 100.0);
   const isInfeasible = activeStep?.feasibility_flag === 0;
-  const representativeModel = activeStep?.models?.lstm ?? activeStep?.models?.tcn ?? activeStep?.models?.xgboost ?? {};
-  const actNowCase = representativeModel.case3 ?? representativeModel.case1 ?? {};
-  const waitCase = representativeModel.case1 ?? representativeModel.case3 ?? {};
-  const actNowForecast = forecastFromDecision(actNowCase.decision ?? 1, actNowCase.prob_commit ?? 0, baseFuel, baseDeltaV);
-  const waitForecast = forecastFromDecision(waitCase.decision ?? 0, waitCase.prob_commit ?? 0, baseFuel, baseDeltaV * 1.35);
+
   const reasoningText = result ? getReasoningText(finalDecision, isInfeasible, confidence) : '';
   const tags = buildScenarioTags(finalDecision, isInfeasible, scenarioInfo, notice);
   const conclusionText = finalDecision === 'COMMIT' || finalDecision === 'FORCE_COMMIT'
-    ? 'Optimal strategy: COMMIT to maneuver immediately.'
-    : 'Optimal strategy: continue monitoring and hold the current state.';
+    ? 'Optimal strategy: COMMIT to maneuver before window expires.'
+    : 'Optimal strategy: continue orbital observation and hold state.';
   const executionWindowText = isInfeasible ? '12 minutes' : '24 minutes';
 
   return (
     <section>
       <div className={styles.decisionBadge}>Decision Reasoning</div>
 
-      {loading && <p className={styles.infoText}>Running model inference...</p>}
+      {loading && <p className={styles.infoText}>Running 6-model inference...</p>}
       {error && <p className={styles.errorText}>{error}</p>}
       {notice && <p className={styles.infoText}>{notice}</p>}
 
-      {!loading && !result && <p className={styles.infoText}>Load WAIT or COMMIT scenario to view real backend output.</p>}
-
-      {result && (
-        <p className={styles.infoText}>
-          Fuel here represents remaining delta-v budget from the dataset, not propellant mass in kg.
-        </p>
-      )}
+      {!loading && !result && <p className={styles.infoText}>Load WAIT or COMMIT scenario to view real 6-model outputs.</p>}
 
       {result && (
         <div className={styles.finalCard}>
-          <div className={styles.caseTitle}>Final Recommendation</div>
+          <div className={styles.caseTitle}>Ensemble Recommendation</div>
           <div className={styles.metricRow}>
-            <span>Current Step</span>
-            <span className={styles.cyan}>{currentStep}</span>
+            <span>Timestep</span>
+            <span className={styles.cyan}>t={currentStep}</span>
           </div>
           <div className={styles.metricRow}>
-            <span>Decision</span>
+            <span>Final Decision</span>
             <span className={`${styles.actionBadge} ${decisionTone(finalDecision)}`}>{finalDecision}</span>
           </div>
           <div className={styles.metricRow}>
@@ -169,37 +152,18 @@ function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, n
           {scenarioInfo?.source?.event_id != null && (
             <div className={styles.metricRow}>
               <span>Dataset Event</span>
-              <span className={styles.cyan}>#{scenarioInfo.source.event_id} @ {scenarioInfo.source.start_index}</span>
+              <span className={styles.cyan}>#{scenarioInfo.source.event_id}</span>
             </div>
           )}
           <div className={styles.metricRow}>
             <span>Feasibility</span>
             <span className={isInfeasible ? styles.orange : styles.green}>{isInfeasible ? 'INFEASIBLE' : 'FEASIBLE'}</span>
           </div>
-          {isInfeasible && <p className={styles.warningText}>Current scenario step is infeasible under symbolic constraints.</p>}
+          {isInfeasible && <p className={styles.warningText}>Current step is infeasible; symbolic safety shield protects state.</p>}
         </div>
       )}
 
       {result && <p className={styles.reasoning}>{reasoningText}</p>}
-
-      {result && (
-        <div className={styles.caseGrid}>
-          <div className={styles.scenarioRow}>
-            <article className={styles.scenarioCard}>
-              <div className={styles.caseTitle}>Act Now</div>
-              <div className={styles.scenarioMetric}><span>Fuel</span><span className={styles.cyan}>{formatMetric(actNowForecast.deltaV)} m/s</span></div>
-              <div className={styles.scenarioMetric}><span>Final Pc</span><span className={styles.green}>{formatProbability(actNowCase.prob_commit ?? 0)}</span></div>
-              <div className={styles.scenarioMetric}><span>Feasibility</span><span className={actNowCase.feasibility_flag === 0 ? styles.red : styles.green}>{actNowCase.feasibility_flag === 0 ? '0.21' : '0.94'}</span></div>
-            </article>
-            <article className={styles.scenarioCard}>
-              <div className={styles.caseTitle}>Wait 5min</div>
-              <div className={styles.scenarioMetric}><span>Fuel</span><span className={styles.orange}>{formatMetric(waitForecast.deltaV)} m/s</span></div>
-              <div className={styles.scenarioMetric}><span>Final Pc</span><span className={styles.red}>{formatProbability(waitCase.prob_commit ?? 0)}</span></div>
-              <div className={styles.scenarioMetric}><span>Feasibility</span><span className={waitCase.feasibility_flag === 0 ? styles.red : styles.green}>{waitCase.feasibility_flag === 0 ? '0.21' : '0.94'}</span></div>
-            </article>
-          </div>
-        </div>
-      )}
 
       {result && (
         <>
@@ -217,54 +181,64 @@ function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, n
         </>
       )}
 
+      {/* 6-MODEL REAL TIME OUTPUT MATRIX */}
+      <div className={styles.caseTitle} style={{ marginTop: '16px', marginBottom: '8px' }}>
+        6-Model Decision Matrix (Step {currentStep})
+      </div>
+
       <div className={styles.matrixGrid}>
         {modelOrder.map((modelKey) => {
-          const modelValue = activeStep?.models?.[modelKey] ?? {};
-          const case1Decision = Number(modelValue?.case1?.decision ?? 0);
-          const case3Decision = Number(modelValue?.case3?.decision ?? 0);
-          const changedByMask = case1Decision !== case3Decision;
-          const override = Boolean(modelValue?.case3?.override);
+          const modelStep = activeStep?.models?.[modelKey] ?? {};
+          const rawPred = modelStep?.raw ?? 'WAIT';
+          const finalPred = modelStep?.final ?? decisionLabel(modelStep?.decision ?? 0);
+          const probCommit = Number(modelStep?.prob_commit ?? 0);
+          const isOverridden = Boolean(modelStep?.override);
+          const overrideReason = modelStep?.reason ?? '';
+          const forecast = forecastFromDecision(finalPred, probCommit, baseFuel, baseDeltaV);
 
-          return caseOrder.map((caseInfo) => {
-            const caseData = modelValue?.[caseInfo.key] ?? {};
-            const caseDecision = Number(caseData?.decision ?? 0);
-            const probCommit = Number(caseData?.prob_commit ?? 0);
-            const forecast = forecastFromDecision(caseDecision, probCommit, baseFuel, baseDeltaV);
+          return (
+            <article
+              key={modelKey}
+              className={`${styles.modelCard} ${isOverridden ? styles.overrideCard : ''}`}
+            >
+              <div className={styles.modelTitle}>
+                {modelLabels[modelKey]}
+                <span className={isOverridden ? styles.red : styles.cyan} style={{ float: 'right', fontSize: '10px' }}>
+                  {isOverridden ? 'SHIELDED' : 'CLEAN'}
+                </span>
+              </div>
 
-            return (
-              <article
-                key={`${modelKey}-${caseInfo.key}`}
-                className={`${styles.modelCard} ${override && caseInfo.key === 'case3' ? styles.overrideCard : ''} ${changedByMask && caseInfo.key === 'case3' ? styles.changedCard : ''}`}
-              >
-                <div className={styles.modelTitle}>{modelLabels[modelKey]} · {caseInfo.label}</div>
-                <div className={styles.metricRow}>
-                  <span>Decision</span>
-                  <span className={`${styles.actionBadge} ${decisionTone(caseDecision)}`}>{decisionLabel(caseDecision)}</span>
-                </div>
-                <div className={styles.metricRow}>
-                  <span>Commit Prob</span>
-                  <span className={styles.cyan}>{formatMetric(forecast.confidence * 100, 1)}%</span>
-                </div>
-                <div className={styles.metricRow}>
-                  <span>Forecast Delta-V</span>
-                  <span className={styles.cyan}>{formatMetric(forecast.deltaV)} m/s</span>
-                </div>
-                <div className={styles.metricRow}>
-                  <span>Remaining Fuel Budget</span>
-                  <span className={styles.green}>{formatMetric(forecast.fuel)} m/s</span>
-                </div>
-                <div className={styles.metricRow}>
-                  <span>Override</span>
-                  <span className={override && caseInfo.key === 'case3' ? styles.red : styles.green}>
-                    {override && caseInfo.key === 'case3' ? 'YES' : 'NO'}
-                  </span>
-                </div>
-                {changedByMask && caseInfo.key === 'case3' && (
-                  <p className={styles.warningText}>Case1 != Case3 (mask changed decision).</p>
-                )}
-              </article>
-            );
-          });
+              <div className={styles.metricRow}>
+                <span>Raw Model</span>
+                <span className={rawPred === 'COMMIT' ? styles.orange : styles.cyan}>
+                  {rawPred}
+                </span>
+              </div>
+
+              <div className={styles.metricRow}>
+                <span>P(Commit)</span>
+                <span className={styles.cyan}>{(probCommit * 100).toFixed(1)}%</span>
+              </div>
+
+              <div className={styles.metricRow}>
+                <span>Final Decision</span>
+                <span className={`${styles.actionBadge} ${decisionTone(finalPred)}`}>
+                  {finalPred}
+                </span>
+              </div>
+
+              <div className={styles.metricRow}>
+                <span>Delta-V</span>
+                <span className={styles.cyan}>{formatMetric(forecast.deltaV)} m/s</span>
+              </div>
+
+              {isOverridden && (
+                <p className={styles.warningText} style={{ marginTop: '4px', fontSize: '10px' }}>
+                  Shield: {overrideReason}
+                </p>
+              )}
+            </article>
+          );
         })}
       </div>
     </section>

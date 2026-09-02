@@ -34,6 +34,8 @@ function SimulatorDashboard() {
     result,
     loading,
     selectedScenario,
+    selectedEventId,
+    eventsList,
     scenarioInfo,
     notice,
     error,
@@ -70,6 +72,8 @@ function SimulatorDashboard() {
           currentStep={currentStep}
           hasScenario={hasScenario}
           selectedScenario={selectedScenario}
+          selectedEventId={selectedEventId}
+          eventsList={eventsList}
         />
 
         <section className={styles.centerOverlay}>
@@ -82,38 +86,38 @@ function SimulatorDashboard() {
             <div className={styles.telemetryGroup}>
               <p>
                 <span>Altitude</span>
-                <strong>{telemetry.altitudeKm.toFixed(3)} km</strong>
+                <strong>{telemetry?.altitudeKm != null ? telemetry.altitudeKm.toFixed(3) : '0.000'} km</strong>
               </p>
               <p>
                 <span>Velocity</span>
-                <strong>{telemetry.velocityMs.toFixed(2)} m/s</strong>
+                <strong>{telemetry?.velocityMs != null ? telemetry.velocityMs.toFixed(2) : '0.00'} m/s</strong>
               </p>
               <p>
                 <span>Perigee</span>
-                <strong>{telemetry.periKm.toFixed(0)} km</strong>
+                <strong>{telemetry?.periKm != null ? telemetry.periKm.toFixed(0) : '0'} km</strong>
               </p>
               <p>
                 <span>Apogee</span>
-                <strong>{telemetry.apoKm.toFixed(0)} km</strong>
+                <strong>{telemetry?.apoKm != null ? telemetry.apoKm.toFixed(0) : '0'} km</strong>
               </p>
             </div>
 
             <div className={styles.telemetryGroup}>
               <p>
                 <span>Inclination</span>
-                <strong>{telemetry.inclinationDeg.toFixed(0)}°</strong>
+                <strong>{telemetry?.inclinationDeg != null ? telemetry.inclinationDeg.toFixed(0) : '0'}°</strong>
               </p>
               <p>
                 <span>Semi-Major</span>
-                <strong>{telemetry.semiMajorAxisKm.toFixed(0)} km</strong>
+                <strong>{telemetry?.semiMajorAxisKm != null ? telemetry.semiMajorAxisKm.toFixed(0) : '0'} km</strong>
               </p>
               <p>
                 <span>Eccentricity</span>
-                <strong>{telemetry.eccentricity.toFixed(3)}</strong>
+                <strong>{telemetry?.eccentricity != null ? telemetry.eccentricity.toFixed(3) : '0.000'}</strong>
               </p>
               <p>
                 <span>Pc</span>
-                <strong>{formatPoc(telemetry.poc)}</strong>
+                <strong>{formatPoc(telemetry?.poc ?? 0)}</strong>
               </p>
             </div>
           </div>

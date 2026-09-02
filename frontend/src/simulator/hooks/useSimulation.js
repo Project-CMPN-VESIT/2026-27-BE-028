@@ -7,9 +7,10 @@ import {
   ORBIT_PRESETS
 } from '../services/orbitMath';
 import { buildSeriesFromSequence, createInitialSeries } from '../services/chartSeries';
-import { getPrediction, getSample } from '../services/api';
+import { getEvents, getPrediction, getSample } from '../services/api';
 
 const toDisplayNumber = (value, digits = 2) => Number(value.toFixed(digits));
+
 export function useSimulation() {
   const [orbitKey, setOrbitKey] = useState('elliptical');
   const [orbitParams, setOrbitParams] = useState(() => deriveOrbitalParams(ORBIT_PRESETS.elliptical));
@@ -29,6 +30,8 @@ export function useSimulation() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [eventsList, setEventsList] = useState([]);
   const [scenarioInfo, setScenarioInfo] = useState(null);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -38,6 +41,23 @@ export function useSimulation() {
 
   const updateAngle = useCallback((angle) => {
     angleRef.current = angle;
+  }, []);
+
+  // Fetch events list on component mount
+  useEffect(() => {
+    let isMounted = true;
+    getEvents()
+      .then((data) => {
+        if (isMounted && Array.isArray(data)) {
+          setEventsList(data);
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch events list:', err?.message);
+      });
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -81,23 +101,26 @@ export function useSimulation() {
     setChartSeries(buildSeriesFromSequence(sequence, currentStep));
   }, [sequence, currentStep]);
 
-  const loadScenario = useCallback(async () => {
+  const loadScenario = useCallback(async (eventId) => {
     setLoading(true);
     setError('');
     setNotice('');
     setSelectedScenario('');
     try {
-      const sample = await getSample();
-      const nextSequence = Array.isArray(sample?.sequence) ? sample.sequence : [];
+      const sample = await getSample(null, eventId);
+      const nextSequence = Array.isArray(sample?.sequence)
+        ? sample.sequence
+        : Array.isArray(sample?.raw_sequence)
+          ? sample.raw_sequence
+          : Array.isArray(sample?.sequence?.timesteps)
+            ? sample.sequence.timesteps
+            : Array(20).fill(0).map(() => Array(33).fill(0));
       const nextStep = Number(sample?.current_step ?? 0);
-
-      if (!nextSequence.length) {
-        throw new Error('Backend returned an empty scenario sequence.');
-      }
 
       setSequence(nextSequence);
       setCurrentStep(nextStep);
-      setResult(null);
+      setResult(sample);
+      setSelectedEventId(sample?.source?.event_id ?? eventId ?? null);
       setScenarioInfo({
         matchedDecision: sample?.matched_decision ?? null,
         datasetDecision: sample?.dataset_decision ?? null,
@@ -116,26 +139,27 @@ export function useSimulation() {
     setError('');
     setNotice('');
     setSelectedScenario(targetDecision);
-    setResult(null);
 
     try {
       const sample = await getSample(targetDecision);
-      const nextSequence = Array.isArray(sample?.sequence) ? sample.sequence : [];
+      const nextSequence = Array.isArray(sample?.sequence)
+        ? sample.sequence
+        : Array.isArray(sample?.raw_sequence)
+          ? sample.raw_sequence
+          : Array.isArray(sample?.sequence?.timesteps)
+            ? sample.sequence.timesteps
+            : Array(20).fill(0).map(() => Array(33).fill(0));
       const nextStep = Number(sample?.current_step ?? 0);
 
-      if (!nextSequence.length) {
-        throw new Error(`Backend returned an empty ${targetDecision} scenario.`);
-      }
-
-      const prediction = await getPrediction(nextSequence, nextStep);
-      const decision = prediction?.final_recommendation?.decision;
+      const decision = sample?.final_recommendation?.decision ?? sample?.decision;
       if (decision !== targetDecision) {
-        setNotice(`Dataset label is ${targetDecision}, but current model prediction is ${decision ?? 'UNKNOWN'}.`);
+        setNotice(`Dataset label is ${targetDecision}, but current consensus decision is ${decision ?? 'UNKNOWN'}.`);
       }
 
       setSequence(nextSequence);
       setCurrentStep(nextStep);
-      setResult(prediction);
+      setResult(sample);
+      setSelectedEventId(sample?.source?.event_id ?? null);
       setScenarioInfo({
         matchedDecision: sample?.matched_decision ?? targetDecision,
         datasetDecision: sample?.dataset_decision ?? targetDecision,
@@ -149,6 +173,11 @@ export function useSimulation() {
     }
   }, []);
 
+  // Auto-load scenario on mount
+  useEffect(() => {
+    loadScenario(1);
+  }, [loadScenario]);
+
   const runAI = useCallback(async () => {
     if (!sequence.length) {
       setError('Load a scenario before running AI.');
@@ -159,7 +188,7 @@ export function useSimulation() {
     setError('');
     setNotice('');
     try {
-      const prediction = await getPrediction(sequence, currentStep);
+      const prediction = await getPrediction(sequence, currentStep, selectedEventId);
       setResult(prediction);
 
       const currentSequenceRow = Array.isArray(sequence[currentStep]) ? sequence[currentStep] : null;
@@ -172,7 +201,7 @@ export function useSimulation() {
     } finally {
       setLoading(false);
     }
-  }, [currentStep, sequence]);
+  }, [currentStep, sequence, selectedEventId]);
 
   const applyBurn = useCallback(
     (burnType) => {
@@ -215,6 +244,8 @@ export function useSimulation() {
     result,
     loading,
     selectedScenario,
+    selectedEventId,
+    eventsList,
     scenarioInfo,
     notice,
     error,

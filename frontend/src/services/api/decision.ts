@@ -39,3 +39,16 @@ export async function fetchMissionValidation(eventId: string, event?: MissionEve
     async () => buildMockValidation(resolvedEvent),
   );
 }
+
+export async function fetchModelComparison(): Promise<any> {
+  const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/models/comparison`);
+  if (!response.ok) {
+    const fallbackResp = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/analytics/models`);
+    if (!fallbackResp.ok) {
+      throw new Error('Model comparison endpoint unavailable');
+    }
+    return await fallbackResp.json();
+  }
+  return await response.json();
+}
+

@@ -92,17 +92,24 @@ export const normalizeDecision = (value: unknown, event: MissionEvent): MissionD
   }
 
   const candidate = value as Record<string, unknown>;
+  const modelsMap = candidate.models as MissionDecision['models'] | undefined;
+  const allModelsList = (Array.isArray(candidate.all_models)
+    ? candidate.all_models
+    : modelsMap ? Object.values(modelsMap) : []) as MissionDecision['all_models'];
+
   return {
     eventId: event.eventId,
     status: (candidate.status as MissionDecision['status']) ?? 'WAIT',
     recommendation: String(candidate.recommendation ?? candidate.reason ?? 'Commit to optimized maneuver'),
-    confidencePct: toNumber(candidate.confidence_pct ?? candidate.confidence ?? 0),
-    costIfAct: toNumber(candidate.cost_if_act ?? candidate.cost_act ?? 0),
-    costIfWait: toNumber(candidate.cost_if_wait ?? candidate.cost_wait ?? 0),
-    burnWindowMinutes: toNumber(candidate.burn_window_minutes ?? 0),
+    confidencePct: toNumber(candidate.confidencePct ?? candidate.confidence_pct ?? candidate.confidence ?? 0),
+    costIfAct: toNumber(candidate.costIfAct ?? candidate.cost_if_act ?? candidate.cost_act ?? 0),
+    costIfWait: toNumber(candidate.costIfWait ?? candidate.cost_if_wait ?? candidate.cost_wait ?? 0),
+    burnWindowMinutes: toNumber(candidate.burnWindowMinutes ?? candidate.burn_window_minutes ?? 0),
     reason: String(candidate.reason ?? ''),
     options: Array.isArray(candidate.options) ? candidate.options as MissionDecision['options'] : [],
     alerts: Array.isArray(candidate.alerts) ? candidate.alerts.map(String) : [],
+    models: modelsMap,
+    all_models: allModelsList,
   };
 };
 

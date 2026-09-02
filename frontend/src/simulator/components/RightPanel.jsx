@@ -17,7 +17,9 @@ const telemetryCells = [
 const cameraModes = ['track', 'free', 'earth'];
 
 function formatTelemetry(cell, telemetry) {
+  if (!telemetry) return '--';
   const value = telemetry[cell.key];
+  if (value == null || Number.isNaN(Number(value))) return '--';
   if (cell.format === 'exp') {
     return Number(value).toExponential(2);
   }

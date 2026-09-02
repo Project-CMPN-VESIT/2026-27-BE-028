@@ -26,21 +26,33 @@ const inferenceApi = axios.create({
   timeout: 30000
 });
 
-export async function getSample(decision) {
-  const params = decision ? { decision } : undefined;
+export async function getEvents() {
+  const response = await inferenceApi.get('/events');
+  return response.data;
+}
+
+export async function getSample(decision, eventId) {
+  const params = {};
+  if (decision) params.decision = decision;
+  if (eventId) params.event_id = eventId;
   const response = await inferenceApi.get('/sample', { params });
   return response.data;
 }
 
-export async function getPrediction(sequence, currentStep) {
-  const response = await inferenceApi.post('/predict', {
+export async function getPrediction(sequence, currentStep, eventId) {
+  const payload = {
     sequence,
     current_step: currentStep
-  });
+  };
+  if (eventId) {
+    payload.event_id = eventId;
+  }
+  const response = await inferenceApi.post('/predict', payload);
   return response.data;
 }
 
 export default {
+  getEvents,
   getSample,
   getPrediction
 };

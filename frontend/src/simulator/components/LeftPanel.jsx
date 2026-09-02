@@ -30,7 +30,9 @@ function LeftPanel({
   loading,
   currentStep,
   hasScenario,
-  selectedScenario
+  selectedScenario,
+  selectedEventId,
+  eventsList = []
 }) {
   return (
     <aside className={styles.leftPanel}>
@@ -78,6 +80,31 @@ function LeftPanel({
         </div>
 
         <div className={styles.aiControls}>
+          <div className={styles.burnLabel} style={{ marginTop: '8px', marginBottom: '4px' }}>
+            Dataset Events (400 Loaded)
+          </div>
+
+          {eventsList.length > 0 && (
+            <div className={styles.orbitSelectWrap} style={{ marginBottom: '8px' }}>
+              <select
+                value={selectedEventId || ''}
+                className={styles.orbitSelect}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val) onLoadScenario(val);
+                }}
+                disabled={loading}
+              >
+                <option value="">-- Select Event from Dataset --</option>
+                {eventsList.slice(0, 100).map((ev) => (
+                  <option key={ev.event_id || ev.id} value={ev.event_id || ev.id}>
+                    Event #{ev.event_id || ev.id} [{ev.riskLevel || 'LOW'}] - {ev.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
           <button
             type="button"
             className={`${styles.aiButton} ${styles.aiButtonWait}`}
@@ -94,8 +121,13 @@ function LeftPanel({
           >
             {loading && selectedScenario === 'COMMIT' ? 'Loading...' : 'Load COMMIT Scenario'}
           </button>
-          <button type="button" className={styles.aiButton} onClick={onLoadScenario} disabled={loading}>
-            {loading ? 'Loading...' : 'Load Scenario'}
+          <button
+            type="button"
+            className={styles.aiButton}
+            onClick={() => onLoadScenario()}
+            disabled={loading}
+          >
+            {loading ? 'Loading...' : 'Load Random Scenario'}
           </button>
           <button
             type="button"
@@ -103,11 +135,11 @@ function LeftPanel({
             onClick={onRunAI}
             disabled={loading || !hasScenario}
           >
-            {loading ? 'Running...' : 'Run AI'}
+            {loading ? 'Running...' : 'Run 6-Model AI'}
           </button>
           <p className={styles.scenarioStatus}>
             {hasScenario
-              ? `Current Step: ${currentStep}${selectedScenario ? ` | Target: ${selectedScenario}` : ''}`
+              ? `Event #${selectedEventId ?? '—'} | Step: ${currentStep}${selectedScenario ? ` | Target: ${selectedScenario}` : ''}`
               : 'No scenario loaded'}
           </p>
         </div>

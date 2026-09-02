@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 import { clamp } from '../utils/format';
-import type { MissionDecision, MissionEvent, MissionTelemetry, MissionValidation } from '../types/mission';
+import type { AnalyticsComparisonData, MissionDecision, MissionEvent, MissionTelemetry, MissionValidation } from '../types/mission';
 import { fetchMissionEvents, fetchMissionScenario } from '../services/api/events';
+import { fetchModelComparison } from '../services/api/decision';
 
 interface LoadingState {
   events: boolean;
   scenario: boolean;
+  comparison: boolean;
 }
 
 interface MissionStoreState {
@@ -15,6 +17,7 @@ interface MissionStoreState {
   telemetry: MissionTelemetry | null;
   decision: MissionDecision | null;
   validation: MissionValidation | null;
+  modelComparison: AnalyticsComparisonData | null;
   loading: LoadingState;
   error: string | null;
   timelineCursor: number;
@@ -23,6 +26,7 @@ interface MissionStoreState {
   lastSyncedAt: string | null;
   loadEvents: () => Promise<void>;
   selectEvent: (eventId: string) => Promise<void>;
+  loadModelComparison: () => Promise<void>;
   setTimelineCursor: (value: number) => void;
   setPlaying: (value: boolean) => void;
   togglePlayback: () => void;
@@ -38,9 +42,11 @@ export const useMissionStore = create<MissionStoreState>((set, get) => ({
   telemetry: null,
   decision: null,
   validation: null,
+  modelComparison: null,
   loading: {
     events: false,
     scenario: false,
+    comparison: false,
   },
   error: null,
   timelineCursor: 100,
@@ -72,6 +78,26 @@ export const useMissionStore = create<MissionStoreState>((set, get) => ({
       set((state) => ({
         loading: { ...state.loading, events: false },
         error: error instanceof Error ? error.message : 'Failed to load events',
+      }));
+    }
+  },
+
+  loadModelComparison: async () => {
+    set((state) => ({
+      loading: { ...state.loading, comparison: true },
+      error: null,
+    }));
+
+    try {
+      const comparisonData = await fetchModelComparison();
+      set((state) => ({
+        modelComparison: comparisonData,
+        loading: { ...state.loading, comparison: false },
+      }));
+    } catch (error) {
+      set((state) => ({
+        loading: { ...state.loading, comparison: false },
+        error: error instanceof Error ? error.message : 'Failed to load model comparison',
       }));
     }
   },
