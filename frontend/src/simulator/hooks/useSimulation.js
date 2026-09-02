@@ -162,9 +162,10 @@ export function useSimulation() {
       const prediction = await getPrediction(sequence, currentStep);
       setResult(prediction);
 
-      const case3Physics = prediction?.case3?.physics;
-      if (case3Physics && Number.isFinite(case3Physics.fuel)) {
-        setFuelRemaining(Number(case3Physics.fuel));
+      const currentSequenceRow = Array.isArray(sequence[currentStep]) ? sequence[currentStep] : null;
+      const nextFuel = Number(currentSequenceRow?.[16]);
+      if (Number.isFinite(nextFuel)) {
+        setFuelRemaining(nextFuel);
       }
     } catch (apiError) {
       setError(apiError?.message || 'Failed to run backend prediction.');

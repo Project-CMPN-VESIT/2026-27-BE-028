@@ -1,6 +1,22 @@
 import axios from 'axios';
 
-const INFERENCE_BASE_URL = import.meta.env.VITE_INFERENCE_API_URL || 'http://127.0.0.1:8000';
+const stripTrailingSlash = (value) => String(value ?? '').replace(/\/$/, '');
+
+const resolveBackendBaseUrl = () => {
+  const explicitSimulatorUrl = import.meta.env.VITE_SIMULATOR_API_URL;
+  if (explicitSimulatorUrl) {
+    return stripTrailingSlash(explicitSimulatorUrl.replace(/\/api\/?$/, ''));
+  }
+
+  const sharedApiUrl = import.meta.env.VITE_API_URL;
+  if (sharedApiUrl) {
+    return stripTrailingSlash(sharedApiUrl.replace(/\/api\/?$/, ''));
+  }
+
+  return 'http://localhost:8000';
+};
+
+const INFERENCE_BASE_URL = resolveBackendBaseUrl();
 
 const inferenceApi = axios.create({
   baseURL: INFERENCE_BASE_URL,

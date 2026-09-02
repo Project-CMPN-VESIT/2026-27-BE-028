@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>OrbitalX — Satellite Maneuver Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #040a14;
+    --panel: rgba(6,16,32,0.92);
+    --panel-border: rgba(0,180,255,0.18);
+    --cyan: #00d4ff;
+    --cyan-dim: rgba(0,212,255,0.12);
+    --orange: #ff6b2b;
+    --green: #00ff88;
+    --red: #ff2d55;
+    --yellow: #ffe135;
+    --text: #c8e8ff;
+    --text-dim: #4a7a9b;
+    --mono: 'Share Tech Mono', monospace;
+    --display: 'Orbitron', sans-serif;
+    --body: 'Exo 2', sans-serif;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    user-select: none;
+  }
+
+  /* ─── CANVAS ─── */
+  #threeCanvas {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  /* ─── OVERLAY GRID ─── */
+  #ui {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 280px 1fr 320px;
+    grid-template-rows: 56px 1fr 260px;
+    gap: 0;
+    pointer-events: none;
+  }
+
+  /* ─── TOPBAR ─── */
+  #topbar {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(4,10,20,0.98) 0%, rgba(4,10,20,0.7) 60%, rgba(4,10,20,0.98) 100%);
+    border-bottom: 1px solid var(--panel-border);
+    padding: 0 20px;
+    pointer-events: all;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: var(--cyan);
+    text-shadow: 0 0 20px rgba(0,212,255,0.6);
+  }
+
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--cyan);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--cyan);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.4; transform:scale(0.7); }
+  }
+
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    font-family: var(--display);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+
+  .nav-tab {
+    padding: 6px 14px;
+    cursor: pointer;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .nav-tab.active, .nav-tab:hover {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+  }
+
+  .top-right-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .time-scale-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .time-scale-wrap input[type=range] {
+    width: 80px;
+    accent-color: var(--cyan);
+    cursor: pointer;
+  }
+
+  .time-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--cyan);
+    min-width: 40px;
+  }
+
+  .btn-topbar {
+    padding: 5px 14px;
+    border: 1px solid var(--panel-border);
+    background: var(--cyan-dim);
+    color: var(--cyan);
+    font-family: var(--display);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+
+  .btn-topbar:hover, .btn-topbar.active {
+    background: var(--cyan);
+    color: #000;
+  }
+
+  .sync-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+
+  /* ─── PANELS BASE ─── */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    pointer-events: all;
+  }
+
+  .panel-title {
+    font-family: var(--display);
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    padding: 10px 14px 8px;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .panel-title::before {
+    content: '';
+    width: 3px; height: 12px;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+    border-radius: 2px;
+  }
+
+  /* ─── LEFT PANEL ─── */
+  #leftPanel {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    border-right-color: var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .burn-section {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .burn-label {
+    font-family: var(--display);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+  }
+
+  .burn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .burn-btn {
+    padding: 8px 6px;
+    border: 1px solid rgba(0,212,255,0.25);
+    background: rgba(0,212,255,0.06);
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 8px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .burn-btn:hover, .burn-btn.active {
+    background: rgba(0,212,255,0.2);
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 10px rgba(0,212,255,0.2);
+  }
+
+  .burn-btn.prograde { border-color: rgba(0,255,136,0.3); color: var(--green); }
+  .burn-btn.prograde:hover { background: rgba(0,255,136,0.15); border-color: var(--green); box-shadow: 0 0 10px rgba(0,255,136,0.3); }
+  .burn-btn.retrograde { border-color: rgba(255,45,85,0.3); color: var(--red); }
+  .burn-btn.retrograde:hover { background: rgba(255,45,85,0.15); border-color: var(--red); }
+  .burn-btn.radial { border-color: rgba(255,107,43,0.3); color: var(--orange); }
+  .burn-btn.radial:hover { background: rgba(255,107,43,0.15); border-color: var(--orange); }
+
+  .thrust-wrap {
+    margin-top: 10px;
+  }
+
+  .slider-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+  }
+
+  .thrust-slider {
+    width: 100%;
+    accent-color: var(--orange);
+    cursor: pointer;
+  }
+
+  .thrust-pct {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--orange);
+    text-align: center;
+    text-shadow: 0 0 15px rgba(255,107,43,0.5);
+    margin-top: 4px;
+  }
+
+  /* Orbit type selector */
+  .orbit-select-wrap {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .orbit-select {
+    width: 100%;
+    background: rgba(0,212,255,0.07);
+    border: 1px solid var(--panel-border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-bottom: 6px;
+  }
+
+  .orbit-select option { background: #040a14; }
+
+  /* Decision Panel embedded in left */
+  #decisionInline {
+    flex: 1;
+    padding: 12px 14px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--panel-border) transparent;
+  }
+
+  .decision-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: var(--display);
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .decision-badge.commit {
+    background: rgba(255,107,43,0.15);
+    border: 1px solid var(--orange);
+    color: var(--orange);
+    box-shadow: 0 0 20px rgba(255,107,43,0.2);
+  }
+
+  .decision-badge.wait {
+    background: rgba(0,255,136,0.1);
+    border: 1px solid var(--green);
+    color: var(--green);
+    box-shadow: 0 0 20px rgba(0,255,136,0.15);
+  }
+
+  .decision-badge.force {
+    background: rgba(255,45,85,0.15);
+    border: 1px solid var(--red);
+    color: var(--red);
+    animation: alertPulse 1s ease infinite;
+  }
+
+  @keyframes alertPulse {
+    0%,100% { box-shadow: 0 0 10px rgba(255,45,85,0.3); }
+    50% { box-shadow: 0 0 25px rgba(255,45,85,0.7); }
+  }
+
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(0,212,255,0.06);
+  }
+
+  .metric-key {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-val {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .metric-val.cyan { color: var(--cyan); }
+  .metric-val.orange { color: var(--orange); }
+  .metric-val.green { color: var(--green); }
+  .metric-val.red { color: var(--red); }
+
+  .conf-bar-wrap {
+    margin: 8px 0;
+  }
+
+  .conf-bar-bg {
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .conf-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--green));
+    transition: width 0.8s ease;
+    box-shadow: 0 0 8px rgba(0,212,255,0.4);
+  }
+
+  .cost-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin: 8px 0;
+  }
+
+  .cost-card {
+    background: rgba(0,212,255,0.05);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    padding: 7px;
+    text-align: center;
+  }
+
+  .cost-card-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .cost-card-val {
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  /* ─── CENTER (3D view area - just spacer) ─── */
+  #centerTop {
+    grid-column: 2;
+    grid-row: 2;
+    pointer-events: none;
+    position: relative;
+  }
+
+  /* Floating telemetry overlay on 3D view */
+  #telemetryOverlay {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .telem-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .telem-item {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+
+  .telem-key {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 60px;
+  }
+
+  .telem-val {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    text-shadow: 0 0 10px rgba(0,212,255,0.4);
+  }
+
+  .telem-val.highlight { color: var(--cyan); }
+  .telem-val.warn { color: var(--orange); }
+  .telem-val.danger { color: var(--red); }
+
+  /* Floating event label */
+  #eventLabel {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    pointer-events: none;
+  }
+
+  .event-title-big {
+    font-family: var(--display);
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.8);
+  }
+
+  .event-subtitle {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    margin-top: 4px;
+    border-left: 3px solid var(--cyan);
+    padding-left: 8px;
+  }
+
+  /* ─── RIGHT PANEL ─── */
+  #rightPanel {
+    grid-column: 3;
+    grid-row: 2 / 4;
+    border-left-color: var(--panel-border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .telemetry-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--panel-border);
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .telem-cell {
+    background: var(--panel);
+    padding: 10px 12px;
+  }
+
+  .telem-cell-key {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 3px;
+  }
+
+  .telem-cell-val {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .telem-cell-val.apo { color: var(--orange); }
+  .telem-cell-val.peri { color: var(--green); }
+  .telem-cell-val.cyan { color: var(--cyan); }
+
+  .cam-controls {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .cam-btn {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid var(--panel-border);
+    background: transparent;
+    color: var(--text-dim);
+    font-family: var(--display);
+    font-size: 8px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .cam-btn.active, .cam-btn:hover {
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    color: var(--cyan);
+  }
+
+  /* Explanation box */
+  #explanationBox {
+    flex: 1;
+    padding: 12px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--panel-border) transparent;
+  }
+
+  .explain-title {
+    font-family: var(--display);
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .explain-text {
+    font-family: var(--body);
+    font-size: 11px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+
+  .explain-highlight {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .scenario-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .scenario-card {
+    background: rgba(0,212,255,0.04);
+    border: 1px solid var(--panel-border);
+    border-radius: 4px;
+    padding: 8px;
+  }
+
+  .sc-label {
+    font-family: var(--mono);
+    font-size: 8px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .sc-item {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .tag {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    border: 1px solid;
+  }
+
+  .tag.critical { border-color: var(--red); color: var(--red); background: rgba(255,45,85,0.08); }
+  .tag.warn { border-color: var(--orange); color: var(--orange); background: rgba(255,107,43,0.08); }
+  .tag.ok { border-color: var(--green); color: var(--green); background: rgba(0,255,136,0.08); }
+
+  /* ─── BOTTOM PANEL (charts) ─── */
+  #bottomBar {
+    grid-column: 2 / 3;
+    grid-row: 3;
+    border-top: 1px solid var(--panel-border);
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    background: var(--panel);
+    pointer-events: all;
+  }
+
+  .chart-cell {
+    position: relative;
+    border-right: 1px solid var(--panel-border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-cell:last-child { border-right: none; }
+
+  .chart-label {
+    font-family: var(--display);
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    padding: 8px 12px 4px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .chart-canvas-wrap {
+    flex: 1;
+    position: relative;
+    padding: 4px 8px 4px;
+  }
+
+  /* ─── SCANLINE OVERLAY ─── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 2px; }
+
+  /* ─── ANIMATE IN ─── */
+  @keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: none; } }
+  .panel { animation: fadeIn 0.6s ease both; }
+  #leftPanel { animation-delay: 0.1s; }
+  #rightPanel { animation-delay: 0.2s; }
+  #bottomBar { animation-delay: 0.3s; }
+
+  /* ─── GLITCH TITLE EFFECT ─── */
+  @keyframes glitch {
+    0%,94%,100% { clip-path: none; transform: none; }
+    95% { clip-path: inset(20% 0 30% 0); transform: translateX(-3px); }
+    97% { clip-path: inset(60% 0 10% 0); transform: translateX(3px); }
+  }
+
+  .event-title-big { animation: glitch 8s ease infinite; }
+
+  /* grid scanline on 3D */
+  #scanGrid {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(0,212,255,0.015) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.015) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  .status-led {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 1.5s ease infinite;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="threeCanvas"></canvas>
+<div id="scanGrid"></div>
+
+<div id="ui">
+
+  <!-- ─── TOPBAR ─── -->
+  <div id="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      ORBITALX
+    </div>
+
+    <div class="nav-tabs">
+      <div class="nav-tab active">Dashboard</div>
+      <div class="nav-tab">Events</div>
+      <div class="nav-tab">Visualization</div>
+      <div class="nav-tab">Decision</div>
+      <div class="nav-tab">Prediction</div>
+    </div>
+
+    <div class="top-right-controls">
+      <span class="sync-time" id="syncTime">SYNCED: 0s AGO</span>
+      <div class="time-scale-wrap">
+        <span>TIME SCALE</span>
+        <input type="range" min="1" max="200" value="50" id="timeSlider"/>
+        <span class="time-val" id="timeVal">50x</span>
+      </div>
+      <button class="btn-topbar active" id="pauseBtn">PAUSE</button>
+      <button class="btn-topbar" id="trajBtn">TRAJECTORY</button>
+      <button class="btn-topbar" id="apoBTN">APO/PERI</button>
+    </div>
+  </div>
+
+  <!-- ─── LEFT PANEL ─── -->
+  <div id="leftPanel" class="panel">
+    <div class="panel-title">Burn Controls</div>
+
+    <div class="orbit-select-wrap">
+      <select class="orbit-select" id="orbitType">
+        <option value="iss">ISS (LEO)</option>
+        <option value="elliptical" selected>Elliptical</option>
+        <option value="molniya">Molniya</option>
+        <option value="geo">GEO</option>
+        <option value="custom">Custom TLE</option>
+      </select>
+    </div>
+
+    <div class="burn-section">
+      <div class="burn-label">Directional Burns</div>
+      <div class="burn-grid">
+        <button class="burn-btn prograde" onclick="applyBurn('prograde')">▲ Prograde</button>
+        <button class="burn-btn retrograde" onclick="applyBurn('retrograde')">▼ Retrograde</button>
+        <button class="burn-btn radial" onclick="applyBurn('left')">◀ Left</button>
+        <button class="burn-btn radial" onclick="applyBurn('right')">▶ Right</button>
+        <button class="burn-btn" style="grid-column:1/-1" onclick="applyBurn('radial_out')">↗ Radial Out</button>
+        <button class="burn-btn" style="grid-column:1/-1" onclick="applyBurn('radial_in')">↙ Radial In</button>
+      </div>
+      <div class="thrust-wrap">
+        <div class="slider-label">
+          <span>THRUST</span>
+          <span id="thrustPctLabel">50%</span>
+        </div>
+        <input type="range" class="thrust-slider" min="0" max="100" value="50" id="thrustSlider"
+          oninput="document.getElementById('thrustPctLabel').textContent=this.value+'%'"/>
+      </div>
+    </div>
+
+    <!-- Decision Panel -->
+    <div class="panel-title" style="margin-top:0">AI Decision</div>
+    <div id="decisionInline">
+      <div class="decision-badge commit" id="decisionBadge">
+        <span>●</span> COMMIT MANEUVER
+      </div>
+
+      <div class="conf-bar-wrap">
+        <div class="slider-label" style="margin-bottom:4px">
+          <span style="font-family:var(--mono);font-size:9px;color:var(--text-dim)">CONFIDENCE</span>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--cyan)" id="confPct">78%</span>
+        </div>
+        <div class="conf-bar-bg">
+          <div class="conf-bar-fill" id="confBar" style="width:78%"></div>
+        </div>
+      </div>
+
+      <div class="cost-compare">
+        <div class="cost-card">
+          <div class="cost-card-label">Cost of Acting</div>
+          <div class="cost-card-val" id="costAct" style="color:var(--cyan)">2.34</div>
+        </div>
+        <div class="cost-card">
+          <div class="cost-card-label">Cost of Waiting</div>
+          <div class="cost-card-val" id="costWait" style="color:var(--orange)">4.71</div>
+        </div>
+      </div>
+
+      <div class="metric-row">
+        <span class="metric-key">ΔV Required</span>
+        <span class="metric-val cyan" id="dv">2.3 m/s</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-key">Collision Risk</span>
+        <span class="metric-val orange" id="poc">5.60×10⁻²</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-key">Fuel Remaining</span>
+        <span class="metric-val green" id="fuelRem">36%</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-key">No-Return In</span>
+        <span class="metric-val red" id="noReturn">12 min</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-key">Miss Distance</span>
+        <span class="metric-val" id="missDist">7.2 km</span>
+      </div>
+      <div class="metric-row">
+        <span class="metric-key">Risk Level</span>
+        <span class="metric-val red" id="riskLevel">CRITICAL</span>
+      </div>
+
+      <div class="tag-row" id="tagRow">
+        <div class="tag critical">⚠ Critical Risk</div>
+        <div class="tag warn">⏱ Time Critical</div>
+        <div class="tag critical">🚨 No Return Point</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── CENTER OVERLAY (floats over 3D canvas) ─── -->
+  <div id="centerTop">
+    <div id="eventLabel">
+      <div class="event-title-big" id="eventTitle">Satellite<br>Maneuver Simulator</div>
+      <div class="event-subtitle" id="eventSub">EVT-2080 · STARLINK-1234 × FRA-3047</div>
+    </div>
+    <div id="telemetryOverlay">
+      <div class="telem-group">
+        <div class="telem-item">
+          <span class="telem-key">Altitude</span>
+          <span class="telem-val highlight" id="altVal">407.998 km</span>
+        </div>
+        <div class="telem-item">
+          <span class="telem-key">Velocity</span>
+          <span class="telem-val" id="velVal">7667.40 m/s</span>
+        </div>
+        <div class="telem-item">
+          <span class="telem-key">Perigee</span>
+          <span class="telem-val" style="color:var(--green)" id="periVal">407 km</span>
+        </div>
+        <div class="telem-item">
+          <span class="telem-key">Apogee</span>
+          <span class="telem-val warn" id="apoVal">421 km</span>
+        </div>
+      </div>
+      <div class="telem-group">
+        <div class="telem-item">
+          <span class="telem-key">Inclination</span>
+          <span class="telem-val" id="inclVal">52°</span>
+        </div>
+        <div class="telem-item">
+          <span class="telem-key">Semi-Major</span>
+          <span class="telem-val highlight" id="smaVal">6792 km</span>
+        </div>
+        <div class="telem-item">
+          <span class="telem-key">Eccentricity</span>
+          <span class="telem-val" id="eccVal">0.001</span>
+        </div>
+        <div class="telem-item">
+          <span class="telem-key">Period</span>
+          <span class="telem-val" id="periodVal">5571 s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── RIGHT PANEL ─── -->
+  <div id="rightPanel" class="panel">
+    <div class="panel-title">Telemetry · <span class="status-led"></span></div>
+
+    <div class="telemetry-grid">
+      <div class="telem-cell">
+        <div class="telem-cell-key">Altitude</div>
+        <div class="telem-cell-val cyan" id="rt-alt">407.998 km</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Velocity</div>
+        <div class="telem-cell-val" id="rt-vel">7667.40 m/s</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Perigee</div>
+        <div class="telem-cell-val peri" id="rt-peri">407 km</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Apogee</div>
+        <div class="telem-cell-val apo" id="rt-apo">421 km</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Inclination</div>
+        <div class="telem-cell-val" id="rt-incl">52°</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Semi-Major Axis</div>
+        <div class="telem-cell-val cyan" id="rt-sma">6792 km</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Eccentricity</div>
+        <div class="telem-cell-val" id="rt-ecc">0.001</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Orbital Period</div>
+        <div class="telem-cell-val" id="rt-period">5571 s</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">RAAN</div>
+        <div class="telem-cell-val" id="rt-raan">0.0°</div>
+      </div>
+      <div class="telem-cell">
+        <div class="telem-cell-key">Probability Pc</div>
+        <div class="telem-cell-val apo" id="rt-poc">5.60×10⁻²</div>
+      </div>
+    </div>
+
+    <div class="cam-controls">
+      <button class="cam-btn active" onclick="setCam('track')">Track Cam</button>
+      <button class="cam-btn" onclick="setCam('free')">Free Cam</button>
+      <button class="cam-btn" onclick="setCam('earth')">Earth Cam</button>
+    </div>
+
+    <!-- Explanation Panel -->
+    <div class="panel-title">AI Explanation</div>
+    <div id="explanationBox">
+      <div class="explain-title">
+        <span>⚡</span> Decision Reasoning
+      </div>
+      <div class="explain-text" id="explainText">
+        Collision probability is <span class="explain-highlight">rising rapidly</span> as TCA approaches. 
+        PoC has increased from <span class="explain-highlight">50% → 82%</span> in the last observation window.
+        Positional uncertainty is growing, reflecting estimation errors and trajectory divergence.
+        The <span class="explain-highlight">feasibility window is shrinking</span> — only 12 minutes remain 
+        before the no-return point. Waiting will require significantly more ΔV and may render the 
+        avoidance maneuver infeasible.
+      </div>
+
+      <div class="scenario-row">
+        <div class="scenario-card">
+          <div class="sc-label">▶ Act Now</div>
+          <div class="sc-item"><span>Fuel</span><span style="color:var(--cyan)">2.3 m/s</span></div>
+          <div class="sc-item"><span>Final Pc</span><span style="color:var(--green)">1.2×10⁻⁴</span></div>
+          <div class="sc-item"><span>Feasibility</span><span style="color:var(--green)">0.94</span></div>
+        </div>
+        <div class="scenario-card">
+          <div class="sc-label">⏸ Wait 5min</div>
+          <div class="sc-item"><span>Fuel</span><span style="color:var(--orange)">4.7 m/s</span></div>
+          <div class="sc-item"><span>Final Pc</span><span style="color:var(--red)">8.4×10⁻²</span></div>
+          <div class="sc-item"><span>Feasibility</span><span style="color:var(--red)">0.21</span></div>
+        </div>
+      </div>
+
+      <div class="explain-title" style="margin-top:8px">
+        <span>🎯</span> AI Conclusion
+      </div>
+      <div class="explain-text">
+        <span class="explain-highlight">Rising PoC and decreasing uncertainty</span> confirm high collision probability. 
+        Feasibility window is shrinking. Optimal strategy: <span class="explain-highlight">COMMIT to maneuver immediately.</span>
+        Estimated ΔV: <span class="explain-highlight">2.3 m/s</span>. Execution window: <span class="explain-highlight">12 minutes.</span>
+      </div>
+
+      <div class="tag-row">
+        <div class="tag critical">PoC Threshold Exceeded</div>
+        <div class="tag warn">Time to TCA &lt; 1hr</div>
+        <div class="tag critical">Feasibility Shrinking</div>
+        <div class="tag critical">Miss Dist Below Safe</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── BOTTOM CHARTS ─── -->
+  <div id="bottomBar">
+    <div class="chart-cell">
+      <div class="chart-label">Probability of Collision vs Time</div>
+      <div class="chart-canvas-wrap">
+        <canvas id="pocChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-cell">
+      <div class="chart-label">Fuel (ΔV) Consumption vs Time</div>
+      <div class="chart-canvas-wrap">
+        <canvas id="fuelChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-cell">
+      <div class="chart-label">Miss Distance vs Time</div>
+      <div class="chart-canvas-wrap">
+        <canvas id="distChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /ui -->
+
+<script>
+/* =====================================================================
+   THREE.JS 3D EARTH + SATELLITE SIMULATION
+   ===================================================================== */
+
+const canvas = document.getElementById('threeCanvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+
+const scene = new THREE.Scene();
+
+// Camera
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100000);
+camera.position.set(0, 6000, 18000);
+camera.lookAt(0, 0, 0);
+
+// ─── LIGHTING ───
+const ambientLight = new THREE.AmbientLight(0x111122, 1.5);
+scene.add(ambientLight);
+
+const sunLight = new THREE.DirectionalLight(0xfff5e0, 2.0);
+sunLight.position.set(50000, 20000, 30000);
+scene.add(sunLight);
+
+// Subtle cyan rim light
+const rimLight = new THREE.DirectionalLight(0x003366, 0.8);
+rimLight.position.set(-30000, 0, -20000);
+scene.add(rimLight);
+
+// ─── STARS ───
+(function createStars() {
+  const geo = new THREE.BufferGeometry();
+  const n = 8000;
+  const pos = new Float32Array(n * 3);
+  const sizes = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const r = 80000 + Math.random() * 20000;
+    pos[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+    pos[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+    pos[i*3+2] = r * Math.cos(phi);
+    sizes[i] = Math.random() * 2 + 0.3;
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+  const mat = new THREE.PointsMaterial({
+    color: 0xffffff, size: 1.2, sizeAttenuation: true,
+    transparent: true, opacity: 0.85
+  });
+  scene.add(new THREE.Points(geo, mat));
+})();
+
+// ─── EARTH ───
+const EARTH_R = 6371;
+
+// Earth sphere using canvas texture (procedural)
+function createEarthTexture() {
+  const size = 2048;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+
+  // Ocean background
+  const grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0, '#0a3d6b');
+  grad.addColorStop(0.5, '#0d4f8a');
+  grad.addColorStop(1, '#041e3a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+
+  // Land masses (simplified painted shapes)
+  ctx.fillStyle = '#1a5c2e';
+  // North America
+  ctx.beginPath();
+  ctx.ellipse(450, 480, 150, 180, -0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(390, 620, 80, 100, 0.2, 0, Math.PI*2);
+  ctx.fill();
+  // South America
+  ctx.beginPath();
+  ctx.ellipse(520, 900, 80, 150, 0.1, 0, Math.PI*2);
+  ctx.fill();
+  // Europe / Africa
+  ctx.beginPath();
+  ctx.ellipse(1060, 500, 80, 120, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(1080, 700, 100, 200, 0.15, 0, Math.PI*2);
+  ctx.fill();
+  // Asia
+  ctx.beginPath();
+  ctx.ellipse(1400, 480, 250, 140, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(1600, 650, 120, 100, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Australia
+  ctx.beginPath();
+  ctx.ellipse(1650, 900, 100, 70, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Antarctica
+  ctx.fillStyle = '#ddeeff';
+  ctx.beginPath();
+  ctx.ellipse(size/2, size-40, size/2, 80, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  // Night-side city lights effect (subtle glow dots)
+  ctx.fillStyle = 'rgba(255,230,100,0.12)';
+  for (let i = 0; i < 200; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    ctx.beginPath();
+    ctx.arc(x, y, Math.random() * 2 + 0.5, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  return new THREE.CanvasTexture(c);
+}
+
+const earthGeo = new THREE.SphereGeometry(EARTH_R, 64, 64);
+const earthMat = new THREE.MeshPhongMaterial({
+  map: createEarthTexture(),
+  specular: new THREE.Color(0x224466),
+  shininess: 30,
+  transparent: false
+});
+const earth = new THREE.Mesh(earthGeo, earthMat);
+scene.add(earth);
+
+// Atmosphere glow
+const atmGeo = new THREE.SphereGeometry(EARTH_R * 1.025, 64, 64);
+const atmMat = new THREE.MeshPhongMaterial({
+  color: 0x0066ff,
+  transparent: true,
+  opacity: 0.08,
+  side: THREE.FrontSide
+});
+scene.add(new THREE.Mesh(atmGeo, atmMat));
+
+// Outer glow ring
+const glowGeo = new THREE.SphereGeometry(EARTH_R * 1.06, 64, 64);
+const glowMat = new THREE.MeshPhongMaterial({
+  color: 0x0044cc,
+  transparent: true,
+  opacity: 0.035,
+  side: THREE.FrontSide
+});
+scene.add(new THREE.Mesh(glowGeo, glowMat));
+
+// ─── ORBITAL PARAMETERS ───
+let orbits = {
+  iss:       { a: 6771, ecc: 0.001, incl: 52, raan: 0,    period: 5571, alt: 400, vel: 7667, peri: 407,  apo: 421  },
+  elliptical:{ a: 19913,ecc: 0.331, incl: 90, raan: 90,   period: 27966,alt: 7500,vel: 6098, peri: 6939, apo: 20131},
+  molniya:   { a: 26535,ecc: 0.703, incl: 63, raan: 85,   period: 43018,alt: 5141,vel: 7360, peri: 1490, apo: 38824},
+  geo:       { a: 42164,ecc: 0.0001,incl: 0,  raan: 0,    period: 86400,alt: 35786,vel:3075, peri: 35786,apo: 35786},
+  custom:    { a: 24642,ecc: 0.541, incl: 91, raan: 88,   period: 38498,alt: 17238,vel: 4192,peri: 4936, apo: 31592}
+};
+
+let currentOrbit = 'elliptical';
+let orbitParams = { ...orbits[currentOrbit] };
+
+// Satellite state
+let satAngle = 0;
+let timeScale = 50;
+let paused = false;
+let showTrajectory = true;
+let showApoPeri = true;
+let camMode = 'free';
+
+// Satellite 3D object (simple model from geometry)
+function createSatellite() {
+  const group = new THREE.Group();
+
+  // Body
+  const bodyGeo = new THREE.BoxGeometry(80, 60, 60);
+  const bodyMat = new THREE.MeshPhongMaterial({ color: 0xcccc88, specular: 0x888800, shininess: 80 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  group.add(body);
+
+  // Solar panels
+  const panelGeo = new THREE.BoxGeometry(240, 8, 60);
+  const panelMat = new THREE.MeshPhongMaterial({ color: 0x2255cc, specular: 0x4488ff, shininess: 120 });
+  const panels = new THREE.Mesh(panelGeo, panelMat);
+  group.add(panels);
+
+  // Dish
+  const dishGeo = new THREE.CylinderGeometry(25, 5, 30, 16, 1, true);
+  const dishMat = new THREE.MeshPhongMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide });
+  const dish = new THREE.Mesh(dishGeo, dishMat);
+  dish.position.set(0, 45, 0);
+  group.add(dish);
+
+  return group;
+}
+
+const satellite = createSatellite();
+scene.add(satellite);
+
+// Orbit trail line
+let orbitLine = null;
+let apoPeriMarkers = null;
+
+function buildOrbitLine(params) {
+  if (orbitLine) scene.remove(orbitLine);
+  if (apoPeriMarkers) scene.remove(apoPeriMarkers);
+
+  const { a, ecc, incl, raan } = params;
+  const points = [];
+  const nPts = 256;
+
+  for (let i = 0; i <= nPts; i++) {
+    const nu = (i / nPts) * Math.PI * 2;
+    const r = a * (1 - ecc * ecc) / (1 + ecc * Math.cos(nu));
+    const x0 = r * Math.cos(nu);
+    const y0 = r * Math.sin(nu);
+
+    // Rotate by inclination then RAAN
+    const inclR = incl * Math.PI / 180;
+    const raanR = raan * Math.PI / 180;
+
+    const x1 = x0;
+    const y1 = y0 * Math.cos(inclR);
+    const z1 = y0 * Math.sin(inclR);
+
+    const x2 = x1 * Math.cos(raanR) - y1 * Math.sin(raanR);
+    const y2 = x1 * Math.sin(raanR) + y1 * Math.cos(raanR);
+    const z2 = z1;
+
+    points.push(new THREE.Vector3(x2, z2, y2));
+  }
+
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  const mat = new THREE.LineBasicMaterial({
+    color: 0x0099ff,
+    transparent: true,
+    opacity: 0.7
+  });
+  orbitLine = new THREE.Line(geo, mat);
+  if (showTrajectory) scene.add(orbitLine);
+
+  // Apo/Peri markers
+  if (showApoPeri) {
+    const markerGroup = new THREE.Group();
+    const markerGeo = new THREE.SphereGeometry(60, 8, 8);
+
+    // Apogee (orange)
+    const apoMat = new THREE.MeshBasicMaterial({ color: 0xff6622 });
+    const apoMesh = new THREE.Mesh(markerGeo, apoMat);
+    const apoPos = points[nPts / 2 | 0];
+    if (apoPos) apoMesh.position.copy(apoPos);
+    markerGroup.add(apoMesh);
+
+    // Perigee (green)
+    const periMat = new THREE.MeshBasicMaterial({ color: 0x00ff88 });
+    const periMesh = new THREE.Mesh(markerGeo, periMat);
+    const periPos = points[0];
+    if (periPos) periMesh.position.copy(periPos);
+    markerGroup.add(periMesh);
+
+    // Line from center through both
+    const lGeo = new THREE.BufferGeometry().setFromPoints([periPos, apoPos]);
+    const lMat = new THREE.LineBasicMaterial({ color: 0xff4400, transparent: true, opacity: 0.5 });
+    markerGroup.add(new THREE.Line(lGeo, lMat));
+
+    apoPeriMarkers = markerGroup;
+    scene.add(apoPeriMarkers);
+  }
+}
+
+function getSatellitePosition(angle, params) {
+  const { a, ecc, incl, raan } = params;
+  const nu = angle;
+  const r = a * (1 - ecc * ecc) / (1 + ecc * Math.cos(nu));
+  const x0 = r * Math.cos(nu);
+  const y0 = r * Math.sin(nu);
+
+  const inclR = incl * Math.PI / 180;
+  const raanR = raan * Math.PI / 180;
+
+  const x1 = x0;
+  const y1 = y0 * Math.cos(inclR);
+  const z1 = y0 * Math.sin(inclR);
+
+  const x2 = x1 * Math.cos(raanR) - y1 * Math.sin(raanR);
+  const y2 = x1 * Math.sin(raanR) + y1 * Math.cos(raanR);
+  const z2 = z1;
+
+  return new THREE.Vector3(x2, z2, y2);
+}
+
+// Mouse-based free camera rotation
+let isDragging = false;
+let prevMouse = { x: 0, y: 0 };
+let camTheta = 0.4, camPhi = 0.4, camRadius = 25000;
+let camTarget = new THREE.Vector3(0, 0, 0);
+
+canvas.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('mouseup', () => isDragging = false);
+canvas.addEventListener('mousemove', e => {
+  if (!isDragging || camMode !== 'free') return;
+  const dx = e.clientX - prevMouse.x;
+  const dy = e.clientY - prevMouse.y;
+  camTheta -= dx * 0.004;
+  camPhi = Math.max(0.05, Math.min(Math.PI - 0.05, camPhi + dy * 0.004));
+  prevMouse = { x: e.clientX, y: e.clientY };
+});
+canvas.addEventListener('wheel', e => {
+  camRadius = Math.max(8000, Math.min(60000, camRadius + e.deltaY * 5));
+});
+
+function updateCameraFree() {
+  camera.position.set(
+    camRadius * Math.sin(camPhi) * Math.cos(camTheta),
+    camRadius * Math.cos(camPhi),
+    camRadius * Math.sin(camPhi) * Math.sin(camTheta)
+  );
+  camera.lookAt(camTarget);
+}
+
+// Build initial orbit
+buildOrbitLine(orbitParams);
+
+// ─── ANIMATION LOOP ───
+let lastTime = performance.now();
+let simTime = 0;
+const syncEl = document.getElementById('syncTime');
+let syncCounter = 0;
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  const now = performance.now();
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+
+  if (!paused) {
+    const angularVel = (2 * Math.PI / orbitParams.period) * timeScale;
+    satAngle += angularVel * dt;
+    if (satAngle > Math.PI * 2) satAngle -= Math.PI * 2;
+    simTime += dt * timeScale;
+    earth.rotation.y += 0.00007 * timeScale * dt;
+  }
+
+  // Update satellite position
+  const satPos = getSatellitePosition(satAngle, orbitParams);
+  satellite.position.copy(satPos);
+
+  // Orient satellite along velocity
+  const nextPos = getSatellitePosition(satAngle + 0.01, orbitParams);
+  satellite.lookAt(nextPos);
+
+  // Scale satellite for visibility
+  const dist = camera.position.distanceTo(satPos);
+  const scale = dist * 0.002;
+  satellite.scale.setScalar(Math.max(1, Math.min(scale, 8)));
+
+  // Camera modes
+  if (camMode === 'track') {
+    const offset = satPos.clone().normalize().multiplyScalar(4000);
+    camera.position.lerp(satPos.clone().add(offset), 0.05);
+    camera.lookAt(satPos);
+  } else if (camMode === 'earth') {
+    camera.position.lerp(new THREE.Vector3(0, 18000, 18000), 0.05);
+    camera.lookAt(0, 0, 0);
+  } else {
+    updateCameraFree();
+  }
+
+  // Update telemetry values dynamically
+  updateTelemetry(satAngle, orbitParams);
+
+  // Sync counter
+  syncCounter++;
+  if (syncCounter % 60 === 0) {
+    const secs = Math.round(syncCounter / 60);
+    syncEl.textContent = `SYNCED: ${secs}s AGO`;
+  }
+
+  renderer.render(scene, camera);
+}
+
+function updateTelemetry(angle, p) {
+  const r = p.a * (1 - p.ecc * p.ecc) / (1 + p.ecc * Math.cos(angle));
+  const alt = Math.round((r - EARTH_R) * 10) / 10;
+
+  // vis-viva velocity
+  const mu = 398600; // km³/s²
+  const v = Math.sqrt(mu * (2/r - 1/p.a)) * 1000; // m/s
+
+  const altStr = alt.toFixed(3) + ' km';
+  const velStr = v.toFixed(2) + ' m/s';
+  const periStr = p.peri + ' km';
+  const apoStr = p.apo + ' km';
+  const inclStr = p.incl + '°';
+  const smaStr = Math.round(p.a) + ' km';
+  const eccStr = p.ecc.toFixed(3);
+  const perStr = Math.round(p.period) + ' s';
+
+  document.getElementById('altVal').textContent = altStr;
+  document.getElementById('velVal').textContent = velStr;
+  document.getElementById('periVal').textContent = periStr;
+  document.getElementById('apoVal').textContent = apoStr;
+  document.getElementById('inclVal').textContent = inclStr;
+  document.getElementById('smaVal').textContent = smaStr;
+  document.getElementById('eccVal').textContent = eccStr;
+  document.getElementById('periodVal').textContent = perStr;
+
+  document.getElementById('rt-alt').textContent = altStr;
+  document.getElementById('rt-vel').textContent = velStr;
+  document.getElementById('rt-peri').textContent = periStr;
+  document.getElementById('rt-apo').textContent = apoStr;
+  document.getElementById('rt-incl').textContent = inclStr;
+  document.getElementById('rt-sma').textContent = smaStr;
+  document.getElementById('rt-ecc').textContent = eccStr;
+  document.getElementById('rt-period').textContent = perStr;
+  document.getElementById('rt-raan').textContent = p.raan + '°';
+}
+
+animate();
+
+// ─── RESIZE ───
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+/* =====================================================================
+   CONTROLS
+   ===================================================================== */
+
+// Time slider
+document.getElementById('timeSlider').addEventListener('input', function() {
+  timeScale = parseFloat(this.value);
+  document.getElementById('timeVal').textContent = timeScale + 'x';
+});
+
+// Pause
+document.getElementById('pauseBtn').addEventListener('click', function() {
+  paused = !paused;
+  this.textContent = paused ? 'RESUME' : 'PAUSE';
+  this.classList.toggle('active', !paused);
+});
+
+// Trajectory toggle
+document.getElementById('trajBtn').addEventListener('click', function() {
+  showTrajectory = !showTrajectory;
+  this.classList.toggle('active', showTrajectory);
+  if (showTrajectory) { if (orbitLine) scene.add(orbitLine); }
+  else { if (orbitLine) scene.remove(orbitLine); }
+});
+
+// Apo/Peri toggle
+document.getElementById('apoBTN').addEventListener('click', function() {
+  showApoPeri = !showApoPeri;
+  this.classList.toggle('active', showApoPeri);
+  buildOrbitLine(orbitParams);
+});
+
+// Orbit type
+document.getElementById('orbitType').addEventListener('change', function() {
+  const key = this.value;
+  currentOrbit = key;
+  orbitParams = { ...orbits[key] };
+  buildOrbitLine(orbitParams);
+  satAngle = 0;
+
+  const titles = {
+    iss: 'Satellite\nManeuver\nSimulator', elliptical: 'Elliptical\nOrbit', 
+    molniya: 'TLE-Based\nSatellite Insertion', geo: 'GEO\nTransfer', custom: 'Custom Satellite\nPlacement'
+  };
+  const subs = {
+    iss: 'ISS · LEO · 52° INCLINATION', elliptical: 'ELLIPTICAL · 90° INCLINATION',
+    molniya: 'MOLNIYA · 63° INCLINATION', geo: 'GEO · GEOSTATIONARY',
+    custom: 'EARLY MANEUVER NODE PROTOTYPE'
+  };
+  document.getElementById('eventTitle').innerHTML = (titles[key]||'').replace('\n','<br>');
+  document.getElementById('eventSub').textContent = subs[key] || '';
+});
+
+// Camera mode
+function setCam(mode) {
+  camMode = mode;
+  document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
+  event && event.target && event.target.classList.add('active');
+}
+
+// Burn controls
+function applyBurn(type) {
+  const thrust = parseFloat(document.getElementById('thrustSlider').value) / 100;
+  const dv = thrust * 0.1;
+
+  if (type === 'prograde') {
+    orbitParams.a = Math.min(42164, orbitParams.a + dv * 500);
+    orbitParams.apo = Math.round(orbitParams.apo + dv * 500);
+  } else if (type === 'retrograde') {
+    orbitParams.a = Math.max(EARTH_R + 200, orbitParams.a - dv * 500);
+    orbitParams.peri = Math.max(200, orbitParams.peri - dv * 200);
+  } else if (type === 'left' || type === 'right') {
+    orbitParams.raan = (orbitParams.raan + (type === 'left' ? -dv * 5 : dv * 5) + 360) % 360;
+  } else if (type === 'radial_out') {
+    orbitParams.ecc = Math.min(0.9, orbitParams.ecc + dv * 0.1);
+  } else if (type === 'radial_in') {
+    orbitParams.ecc = Math.max(0, orbitParams.ecc - dv * 0.05);
+  }
+
+  orbitParams.period = 2 * Math.PI * Math.sqrt(Math.pow(orbitParams.a, 3) / 398600);
+  buildOrbitLine(orbitParams);
+  updateDecisionEngine();
+}
+
+/* =====================================================================
+   DECISION ENGINE (SIMULATED)
+   ===================================================================== */
+function updateDecisionEngine() {
+  // Simulate cost-based decision
+  const poc = 0.02 + Math.random() * 0.08;
+  const fuel = Math.max(10, 36 - Math.random() * 15);
+  const dv = 1.5 + Math.random() * 3;
+  const costAct = dv * 0.8 + poc * 20;
+  const costWait = dv * 1.8 + poc * 45 + (100 - fuel) * 0.1;
+  const decision = costWait > costAct ? 'COMMIT' : 'WAIT';
+  const confidence = 0.6 + Math.random() * 0.35;
+  const noReturn = Math.round(5 + Math.random() * 20);
+
+  const badge = document.getElementById('decisionBadge');
+  badge.className = 'decision-badge ' + (decision === 'COMMIT' ? 'commit' : 'wait');
+  badge.innerHTML = `<span>●</span> ${decision} MANEUVER`;
+
+  document.getElementById('confPct').textContent = Math.round(confidence * 100) + '%';
+  document.getElementById('confBar').style.width = (confidence * 100) + '%';
+  document.getElementById('costAct').textContent = costAct.toFixed(2);
+  document.getElementById('costWait').textContent = costWait.toFixed(2);
+  document.getElementById('dv').textContent = dv.toFixed(1) + ' m/s';
+  document.getElementById('poc').textContent = poc.toExponential(2);
+  document.getElementById('fuelRem').textContent = Math.round(fuel) + '%';
+  document.getElementById('noReturn').textContent = noReturn + ' min';
+  document.getElementById('rt-poc').textContent = poc.toExponential(2);
+
+  const risk = poc > 0.07 ? 'CRITICAL' : poc > 0.04 ? 'HIGH' : poc > 0.01 ? 'MEDIUM' : 'LOW';
+  const riskEl = document.getElementById('riskLevel');
+  riskEl.textContent = risk;
+  riskEl.className = 'metric-val ' + (risk === 'CRITICAL' ? 'red' : risk === 'HIGH' ? 'orange' : risk === 'MEDIUM' ? 'orange' : 'green');
+}
+
+/* =====================================================================
+   CHARTS (Chart.js)
+   ===================================================================== */
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  animation: { duration: 0 },
+  plugins: { legend: { display: false } },
+  scales: {
+    x: {
+      grid: { color: 'rgba(0,212,255,0.06)', drawBorder: false },
+      ticks: { color: '#4a7a9b', font: { family: "'Share Tech Mono'", size: 9 }, maxTicksLimit: 8 }
+    },
+    y: {
+      grid: { color: 'rgba(0,212,255,0.06)', drawBorder: false },
+      ticks: { color: '#4a7a9b', font: { family: "'Share Tech Mono'", size: 9 }, maxTicksLimit: 5 }
+    }
+  }
+};
+
+// Generate initial data
+const N = 60;
+const labels = Array.from({length: N}, (_, i) => (N - i) + 'min');
+
+function genPoc() {
+  const data = [];
+  let v = 0.01;
+  for (let i = 0; i < N; i++) {
+    v = Math.min(1, v + (0.001 + Math.random() * 0.008) * (i / N * 2));
+    data.push(+(v.toFixed(4)));
+  }
+  return data;
+}
+
+function genFuel() {
+  const data = [];
+  let v = 1.5;
+  for (let i = 0; i < N; i++) {
+    v += 0.04 + Math.random() * 0.06;
+    data.push(+(v.toFixed(3)));
+  }
+  return data;
+}
+
+function genDist() {
+  const data = [];
+  let v = 1500;
+  for (let i = 0; i < N; i++) {
+    v = Math.max(5, v - (15 + Math.random() * 30));
+    data.push(Math.round(v));
+  }
+  return data;
+}
+
+// PoC Chart
+const pocCtx = document.getElementById('pocChart').getContext('2d');
+const pocChart = new Chart(pocCtx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      data: genPoc(),
+      borderColor: '#ff2d55',
+      backgroundColor: 'rgba(255,45,85,0.08)',
+      fill: true,
+      tension: 0.4,
+      borderWidth: 1.5,
+      pointRadius: 0
+    }, {
+      data: Array(N).fill(0.1),
+      borderColor: 'rgba(255,225,53,0.4)',
+      borderDash: [4, 3],
+      borderWidth: 1,
+      pointRadius: 0,
+      fill: false
+    }]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: {
+      ...chartDefaults.plugins,
+      annotation: {}
+    }
+  }
+});
+
+// Fuel Chart
+const fuelCtx = document.getElementById('fuelChart').getContext('2d');
+const fuelChart = new Chart(fuelCtx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      data: genFuel(),
+      borderColor: '#00d4ff',
+      backgroundColor: 'rgba(0,212,255,0.07)',
+      fill: true,
+      tension: 0.4,
+      borderWidth: 1.5,
+      pointRadius: 0
+    }]
+  },
+  options: chartDefaults
+});
+
+// Distance Chart
+const distCtx = document.getElementById('distChart').getContext('2d');
+const distChart = new Chart(distCtx, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      data: genDist(),
+      borderColor: '#00ff88',
+      backgroundColor: 'rgba(0,255,136,0.07)',
+      fill: true,
+      tension: 0.4,
+      borderWidth: 1.5,
+      pointRadius: 0
+    }, {
+      data: Array(N).fill(25),
+      borderColor: 'rgba(255,107,43,0.4)',
+      borderDash: [4, 3],
+      borderWidth: 1,
+      pointRadius: 0,
+      fill: false
+    }]
+  },
+  options: chartDefaults
+});
+
+// Real-time chart update
+let chartTick = 0;
+setInterval(() => {
+  if (paused) return;
+  chartTick++;
+
+  // Shift and add new data
+  [pocChart, fuelChart, distChart].forEach(chart => {
+    chart.data.labels.shift();
+    chart.data.labels.push(chartTick + 's');
+  });
+
+  // PoC - rising trend
+  const lastPoc = pocChart.data.datasets[0].data.slice(-1)[0];
+  pocChart.data.datasets[0].data.shift();
+  pocChart.data.datasets[0].data.push(Math.min(1, lastPoc + (Math.random() * 0.006 - 0.001)));
+
+  // Fuel
+  const lastFuel = fuelChart.data.datasets[0].data.slice(-1)[0];
+  fuelChart.data.datasets[0].data.shift();
+  fuelChart.data.datasets[0].data.push(lastFuel + 0.02 + Math.random() * 0.04);
+
+  // Distance
+  const lastDist = distChart.data.datasets[0].data.slice(-1)[0];
+  distChart.data.datasets[0].data.shift();
+  distChart.data.datasets[0].data.push(Math.max(5, lastDist - 8 - Math.random() * 15));
+
+  pocChart.update('none');
+  fuelChart.update('none');
+  distChart.update('none');
+
+  // Update decision every 5s
+  if (chartTick % 5 === 0) updateDecisionEngine();
+}, 1000);
+
+// Initial decision run
+updateDecisionEngine();
+
+</script>
+</body>
+</html>

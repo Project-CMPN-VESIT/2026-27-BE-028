@@ -750,6 +750,11 @@ def run_prediction_output(sequence: list, current_step: int = 0) -> dict:
             status_code=400,
             detail=f"Sequence must have {SEQ_LEN} timesteps, got {x_np.shape[0]}",
         )
+    if x_np.ndim != 2 or x_np.shape[1] != len(MASTER_FEATURES):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Sequence must have {len(MASTER_FEATURES)} features per timestep, got {x_np.shape[1] if x_np.ndim == 2 else 'invalid'}",
+        )
 
     step = max(0, min(int(current_step), SEQ_LEN - 1))
 
@@ -774,6 +779,7 @@ def run_prediction_output(sequence: list, current_step: int = 0) -> dict:
             "generated_at":    datetime.utcnow().isoformat(),
             "sequence_length": SEQ_LEN,
             "current_step":    step,
+            "feature_names":   MASTER_FEATURES,
         },
         "current_step":        step,
         "delta_v_forecast":    round(delta_v_forecast, 6),
@@ -803,6 +809,7 @@ def sample(decision: Optional[str] = None):
         return {
             "sequence":     sel["sequence"],
             "current_step": 0,
+            "feature_names": MASTER_FEATURES,
             "source": {
                 "dataset":     _dataset_path.name,
                 "event_id":    sel["event_id"],
@@ -835,6 +842,7 @@ def sample(decision: Optional[str] = None):
     return {
         "sequence":         sel["sequence"],
         "current_step":     0,
+        "feature_names":    MASTER_FEATURES,
         "matched_decision": target,
         "dataset_decision": sel.get("dataset_decision"),
         "source": {

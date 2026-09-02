@@ -1,43 +1,83 @@
 .decisionBadge {
-  display: inline-block;
-  border-radius: 8px;
-  border: 1px solid rgba(88, 140, 255, 0.48);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  margin-bottom: 10px;
   font-family: var(--display-font);
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   letter-spacing: 0.16em;
-  padding: 8px 12px;
-  margin-bottom: 12px;
-  color: var(--neon-cyan);
-  background: rgba(32, 67, 129, 0.25);
+  font-weight: 700;
+  color: var(--cyan);
+  border: 1px solid var(--panel-border);
+  background: rgba(0, 212, 255, 0.07);
 }
 
 .commit {
-  color: #03120c;
-  background: rgba(67, 255, 168, 0.9);
-  border-color: rgba(67, 255, 168, 0.95);
-  box-shadow: 0 0 20px rgba(67, 255, 168, 0.2);
+  color: var(--orange);
+  border-color: var(--orange);
+  background: rgba(255, 107, 43, 0.15);
+  box-shadow: 0 0 20px rgba(255, 107, 43, 0.18);
 }
 
 .wait {
-  color: #302500;
-  background: rgba(255, 225, 91, 0.9);
-  border-color: rgba(255, 225, 91, 0.95);
+  color: var(--green);
+  border-color: var(--green);
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.12);
 }
 
-.metricRows {
-  display: grid;
-  gap: 5px;
+.force {
+  color: var(--red);
+  border-color: var(--red);
+  background: rgba(255, 45, 85, 0.14);
+  animation: alertPulse 1.2s ease infinite;
 }
 
-.caseGrid {
+@keyframes alertPulse {
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(255, 45, 85, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 24px rgba(255, 45, 85, 0.7);
+  }
+}
+
+.metricRows,
+.caseGrid,
+.timelineList,
+.modelGrid {
   display: grid;
-  gap: 7px;
-  margin-bottom: 10px;
+  gap: 6px;
+}
+
+.scenarioRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.scenarioCard {
+  border: 1px solid var(--panel-border);
+  background: rgba(0, 212, 255, 0.04);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.scenarioMetric {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-family: var(--mono-font);
+  font-size: 0.62rem;
+  padding: 2px 0;
 }
 
 .timelineList {
-  display: grid;
-  gap: 8px;
   max-height: 48vh;
   overflow: auto;
   padding-right: 4px;
@@ -47,21 +87,26 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
+  margin-top: 12px;
+}
+
+.finalCard,
+.timestepCard,
+.caseCard,
+.physicsCard,
+.modelCard {
+  border: 1px solid var(--panel-border);
+  background: rgba(6, 16, 32, 0.84);
+  padding: 8px;
+  min-width: 0;
 }
 
 .finalCard {
-  border: 1px solid rgba(88, 140, 255, 0.32);
-  border-radius: 8px;
-  background: rgba(14, 28, 65, 0.36);
-  padding: 8px;
   margin-bottom: 10px;
 }
 
 .timestepCard {
-  border: 1px solid rgba(88, 140, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(14, 28, 65, 0.42);
-  padding: 8px;
+  border-radius: 4px;
 }
 
 .timestepHeader {
@@ -76,66 +121,33 @@
   border-radius: 999px;
   padding: 2px 8px;
   font-family: var(--display-font);
-  font-size: 0.52rem;
+  font-size: 0.5rem;
   letter-spacing: 0.11em;
   text-transform: uppercase;
 }
 
 .flagOk {
-  color: var(--neon-green);
-  border-color: rgba(67, 255, 168, 0.75);
-  background: rgba(67, 255, 168, 0.14);
+  color: var(--green);
+  border-color: rgba(0, 255, 136, 0.7);
+  background: rgba(0, 255, 136, 0.12);
 }
 
 .flagWarn {
-  color: var(--neon-orange);
-  border-color: rgba(255, 149, 89, 0.75);
-  background: rgba(255, 149, 89, 0.14);
+  color: var(--orange);
+  border-color: rgba(255, 107, 43, 0.7);
+  background: rgba(255, 107, 43, 0.12);
 }
 
 .infeasibleCard {
-  border-color: rgba(255, 149, 89, 0.62);
-  box-shadow: inset 0 0 0 1px rgba(255, 149, 89, 0.2);
-}
-
-.modelGrid {
-  display: grid;
-  gap: 6px;
+  border-color: rgba(255, 107, 43, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(255, 107, 43, 0.18);
 }
 
 .modelCard {
-  border: 1px solid rgba(88, 140, 255, 0.25);
-  border-radius: 8px;
-  background: rgba(9, 18, 46, 0.45);
-  padding: 7px;
-  min-width: 0;
+  border-radius: 4px;
 }
 
-.modelTitle {
-  color: var(--neon-cyan);
-  font-family: var(--display-font);
-  font-size: 0.55rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-bottom: 3px;
-}
-
-.overrideCard {
-  border-color: rgba(255, 84, 127, 0.7);
-  box-shadow: inset 0 0 0 1px rgba(255, 84, 127, 0.2);
-}
-
-.changedCard {
-  border-color: rgba(53, 204, 255, 0.7);
-}
-
-.caseCard {
-  border: 1px solid rgba(88, 140, 255, 0.3);
-  border-radius: 8px;
-  background: rgba(14, 28, 65, 0.42);
-  padding: 8px;
-}
-
+.modelTitle,
 .caseTitle {
   display: block;
   color: var(--text-dim);
@@ -146,106 +158,109 @@
   margin-bottom: 5px;
 }
 
+.overrideCard {
+  border-color: rgba(255, 45, 85, 0.7);
+}
+
+.changedCard {
+  border-color: rgba(0, 212, 255, 0.7);
+}
+
 .actionBadge {
   display: inline-flex;
+  align-items: center;
   border: 1px solid;
   border-radius: 100px;
   padding: 2px 8px;
   font-family: var(--display-font);
-  font-size: 0.54rem;
+  font-size: 0.52rem;
   letter-spacing: 0.1em;
-}
-
-.physicsCard {
-  border: 1px solid rgba(88, 140, 255, 0.32);
-  border-radius: 8px;
-  background: rgba(14, 28, 65, 0.36);
-  padding: 8px;
 }
 
 .metricRow {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(88, 140, 255, 0.12);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.06);
   padding: 5px 0;
   font-family: var(--mono-font);
-  font-size: 0.67rem;
+  font-size: 0.64rem;
+  gap: 10px;
 }
 
 .reasoning {
-  margin: 12px 0 10px;
+  margin: 8px 0 10px;
   color: var(--text-dim);
-  font-size: 0.75rem;
-  line-height: 1.5;
+  font-size: 0.76rem;
+  line-height: 1.6;
+}
+
+.infoText,
+.errorText,
+.warningText {
+  margin: 0 0 10px;
+  font-family: var(--mono-font);
+  font-size: 0.64rem;
 }
 
 .infoText {
-  margin: 0 0 10px;
   color: var(--text-dim);
-  font-size: 0.69rem;
-  font-family: var(--mono-font);
 }
 
 .errorText {
-  margin: 0 0 10px;
-  color: var(--neon-red);
-  font-size: 0.69rem;
-  font-family: var(--mono-font);
+  color: var(--red);
 }
 
 .warningText {
-  margin: 8px 0 0;
-  color: var(--neon-red);
-  font-size: 0.67rem;
-  font-family: var(--mono-font);
+  color: var(--red);
 }
 
 .tagRow {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 4px;
 }
 
 .tag {
   border: 1px solid;
-  border-radius: 100px;
-  padding: 4px 9px;
+  border-radius: 999px;
+  padding: 2px 8px;
   font-family: var(--mono-font);
-  font-size: 0.58rem;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
 }
 
 .critical {
-  color: var(--neon-red);
-  border-color: rgba(255, 84, 127, 0.7);
-  background: rgba(255, 84, 127, 0.12);
+  color: var(--red);
+  border-color: rgba(255, 45, 85, 0.7);
+  background: rgba(255, 45, 85, 0.08);
 }
 
 .warn {
-  color: var(--neon-orange);
-  border-color: rgba(255, 149, 89, 0.7);
-  background: rgba(255, 149, 89, 0.1);
+  color: var(--orange);
+  border-color: rgba(255, 107, 43, 0.7);
+  background: rgba(255, 107, 43, 0.08);
 }
 
 .ok {
-  color: var(--neon-green);
-  border-color: rgba(67, 255, 168, 0.7);
-  background: rgba(67, 255, 168, 0.1);
+  color: var(--green);
+  border-color: rgba(0, 255, 136, 0.7);
+  background: rgba(0, 255, 136, 0.08);
 }
 
 .cyan {
-  color: var(--neon-cyan);
+  color: var(--cyan);
 }
 
 .orange {
-  color: var(--neon-orange);
+  color: var(--orange);
 }
 
 .green {
-  color: var(--neon-green);
+  color: var(--green);
 }
 
 .red {
-  color: var(--neon-red);
+  color: var(--red);
 }
 
 @media (max-width: 1300px) {

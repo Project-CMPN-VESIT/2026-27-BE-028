@@ -5,58 +5,61 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 0 18px;
-  background: linear-gradient(90deg, rgba(5, 12, 29, 0.96), rgba(6, 17, 45, 0.72), rgba(5, 12, 29, 0.96));
-  border-bottom: 1px solid rgba(93, 147, 255, 0.3);
-  backdrop-filter: blur(14px);
+  gap: 16px;
+  padding: 0 20px;
+  background: linear-gradient(90deg, rgba(4, 10, 20, 0.98) 0%, rgba(4, 10, 20, 0.72) 60%, rgba(4, 10, 20, 0.98) 100%);
+  border-bottom: 1px solid var(--panel-border);
+  backdrop-filter: blur(12px);
 }
 
 .logoWrap {
   display: flex;
   align-items: center;
   gap: 10px;
+  font-family: var(--display-font);
+  font-size: 1rem;
+  letter-spacing: 0.24em;
+  font-weight: 900;
+  color: var(--cyan);
+  text-shadow: 0 0 20px rgba(0, 212, 255, 0.55);
 }
 
 .logoDot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: var(--neon-cyan);
-  box-shadow: 0 0 14px var(--neon-cyan);
-  animation: pulse 1.8s ease-in-out infinite;
+  background: var(--cyan);
+  box-shadow: 0 0 12px var(--cyan);
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .logoText {
-  font-family: var(--display-font);
-  font-size: 1rem;
-  letter-spacing: 0.28em;
-  color: var(--neon-cyan);
+  display: inline-block;
 }
 
 .navTabs {
   display: flex;
   gap: 2px;
+  font-family: var(--display-font);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
 }
 
 .navTab {
   border: none;
   background: transparent;
   color: var(--text-dim);
-  font-family: var(--display-font);
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  padding: 8px 13px;
-  border-bottom: 2px solid transparent;
   cursor: pointer;
-  transition: 0.2s ease;
+  padding: 8px 14px;
+  border-bottom: 2px solid transparent;
+  text-transform: uppercase;
+  transition: all 0.18s ease;
 }
 
 .navTab:hover,
 .activeTab {
-  color: var(--neon-cyan);
-  border-bottom-color: var(--neon-cyan);
+  color: var(--cyan);
+  border-bottom-color: var(--cyan);
 }
 
 .controls {
@@ -74,7 +77,7 @@
 .scaleWrap {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   font-family: var(--mono-font);
   color: var(--text-dim);
   font-size: 0.65rem;
@@ -82,33 +85,32 @@
 
 .scaleWrap input {
   width: 80px;
-  accent-color: var(--neon-cyan);
+  accent-color: var(--cyan);
 }
 
 .scaleValue {
-  min-width: 38px;
-  color: var(--neon-cyan);
-  font-size: 0.84rem;
+  min-width: 40px;
+  color: var(--cyan);
+  font-size: 0.82rem;
 }
 
 .topButton {
-  border: 1px solid rgba(83, 143, 255, 0.35);
-  background: rgba(31, 57, 103, 0.3);
-  color: var(--neon-blue);
+  border: 1px solid var(--panel-border);
+  background: var(--cyan-dim);
+  color: var(--cyan);
   font-family: var(--display-font);
-  font-size: 0.58rem;
+  font-size: 0.54rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: all 0.18s ease;
 }
 
 .topButton:hover,
 .topButtonActive {
-  background: linear-gradient(90deg, rgba(58, 224, 255, 0.8), rgba(96, 146, 255, 0.92));
-  border-color: rgba(126, 185, 255, 0.95);
+  background: var(--cyan);
   color: #041425;
 }
 
@@ -120,7 +122,7 @@
   }
 
   50% {
-    opacity: 0.45;
+    opacity: 0.4;
     transform: scale(0.72);
   }
 }
@@ -132,7 +134,7 @@
     flex-direction: column;
     align-items: stretch;
     padding: 12px;
-    border: 1px solid rgba(88, 140, 255, 0.3);
+    border: 1px solid rgba(0, 212, 255, 0.16);
     border-radius: 16px;
   }
 

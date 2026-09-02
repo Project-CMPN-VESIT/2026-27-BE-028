@@ -1,8 +1,8 @@
 const FEATURE_INDEX = {
-  distance: 6,
-  poc: 12,
-  deltaV: 14,
-  fuel: 15
+  distance: 7,
+  poc: 13,
+  deltaV: 15,
+  fuel: 16
 };
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));

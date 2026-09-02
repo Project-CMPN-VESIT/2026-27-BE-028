@@ -113,7 +113,7 @@ function ChartsPanel({ chartSeries, result }) {
   return (
     <section className={styles.chartsPanel}>
       <article className={styles.chartCard}>
-        <h3>Prob Commit vs Timestep (LSTM / TCN / XGB)</h3>
+        <h3>Probability of Collision vs Time</h3>
         <div className={styles.chartBody}>
           <Line data={pocData} options={baseOptions} />
         </div>

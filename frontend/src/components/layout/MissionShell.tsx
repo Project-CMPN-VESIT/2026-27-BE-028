@@ -20,7 +20,7 @@ export function MissionShell({ title, subtitle, tone = 'normal', className, chil
   const lastSyncedAt = useMissionStore((state) => state.lastSyncedAt);
 
   return (
-    <div className={clsx('relative min-h-screen overflow-hidden text-slate-50', tone === 'critical' ? 'bg-[#02040b]' : 'bg-[#020617]', className)}>
+    <div className={clsx('relative min-h-screen overflow-x-hidden overflow-y-auto text-slate-50', tone === 'critical' ? 'bg-[#02040b]' : 'bg-[#020617]', className)}>
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(45,212,191,0.20),transparent_30%),radial-gradient(circle_at_80%_20%,rgba(168,85,247,0.14),transparent_22%),radial-gradient(circle_at_bottom,rgba(14,165,233,0.12),transparent_28%)]" />
       <div className="pointer-events-none absolute inset-0 orbital-starfield opacity-70" />
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20" />

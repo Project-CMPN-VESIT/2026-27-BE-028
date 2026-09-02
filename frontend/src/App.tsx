@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-route
 
 const LandingPage = lazy(() => import('./pages/landing/index'));
 const DashboardPage = lazy(() => import('./pages/dashboard/index'));
+// @ts-ignore - lazy-load the JSX simulation wrapper used by the modular simulator
 const SimulationPage = lazy(() => import('./pages/simulation/index'));
 const CriticalModePage = lazy(() => import('./pages/critical/index'));
 const AnalyticsPage = lazy(() => import('./pages/analytics/index'));

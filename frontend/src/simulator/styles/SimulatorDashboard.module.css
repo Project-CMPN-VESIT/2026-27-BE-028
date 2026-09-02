@@ -1,32 +1,34 @@
 .simulatorApp {
   position: relative;
   min-height: 100vh;
-  background: radial-gradient(circle at 20% 20%, rgba(51, 93, 204, 0.22), transparent 48%),
-    radial-gradient(circle at 75% 20%, rgba(144, 88, 255, 0.2), transparent 40%),
-    linear-gradient(180deg, #050b1e 0%, #02050f 100%);
-  color: var(--text-main);
+  background:
+    radial-gradient(circle at 20% 18%, rgba(0, 212, 255, 0.1), transparent 36%),
+    radial-gradient(circle at 78% 18%, rgba(255, 107, 43, 0.08), transparent 32%),
+    linear-gradient(180deg, #040a14 0%, #03070f 100%);
+  color: var(--text);
   font-family: var(--body-font);
-  overflow: hidden;
+  /* allow scrolling inside the app container */
+  overflow: auto;
 }
 
 .scanGrid {
   position: fixed;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
-  z-index: 2;
-  background-image: linear-gradient(rgba(83, 137, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(83, 137, 255, 0.06) 1px, transparent 1px);
-  background-size: 42px 42px;
-  mask-image: radial-gradient(circle at center, black 45%, transparent 100%);
+  background:
+    linear-gradient(rgba(0, 212, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.015) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
 
 .uiGrid {
-  position: relative;
-  z-index: 3;
+  position: fixed;
+  inset: 0;
+  z-index: 10;
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr) 340px;
-  grid-template-rows: 62px minmax(0, 1fr) 280px;
-  min-height: 100vh;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  grid-template-rows: 56px minmax(0, 1fr) 260px;
   pointer-events: none;
 }
 
@@ -38,49 +40,49 @@
 }
 
 .eventCard {
-  margin: 18px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
   max-width: 430px;
-  background: linear-gradient(135deg, rgba(4, 12, 30, 0.78), rgba(20, 35, 73, 0.2));
-  border: 1px solid rgba(89, 149, 255, 0.5);
-  border-radius: 14px;
-  padding: 14px 16px;
-  backdrop-filter: blur(16px);
-  animation: titleShift 8s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .eventCard h1 {
   margin: 0;
-  font-size: clamp(1.3rem, 2vw, 2rem);
-  line-height: 1.2;
-  letter-spacing: 0.05em;
-  color: #ffffff;
-  text-transform: uppercase;
   font-family: var(--display-font);
+  font-size: clamp(1.8rem, 2.8vw, 2.35rem);
+  line-height: 1.05;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.85);
 }
 
 .eventCard p {
-  margin: 8px 0 0;
-  border-left: 3px solid var(--neon-cyan);
+  margin: 5px 0 0;
   padding-left: 10px;
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  color: var(--neon-cyan);
+  border-left: 3px solid var(--cyan);
   font-family: var(--mono-font);
+  font-size: 0.64rem;
+  letter-spacing: 0.24em;
+  color: var(--cyan);
+  text-transform: uppercase;
 }
 
 .telemetryOverlay {
   position: absolute;
-  bottom: 18px;
-  left: 18px;
-  right: 18px;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
+  pointer-events: none;
 }
 
 .telemetryGroup {
   display: grid;
-  gap: 7px;
+  gap: 6px;
 }
 
 .telemetryGroup p {
@@ -91,75 +93,68 @@
 }
 
 .telemetryGroup span {
-  min-width: 80px;
+  min-width: 74px;
   font-family: var(--mono-font);
-  font-size: 0.68rem;
+  font-size: 0.63rem;
+  text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-dim);
-  text-transform: uppercase;
 }
 
 .telemetryGroup strong {
   font-family: var(--mono-font);
-  font-size: 0.9rem;
+  font-size: 0.82rem;
   font-weight: 400;
-  color: var(--text-main);
-  text-shadow: 0 0 18px rgba(59, 227, 255, 0.45);
-}
-
-@keyframes titleShift {
-  0%,
-  94%,
-  100% {
-    transform: translateX(0);
-  }
-
-  95% {
-    transform: translateX(-3px);
-  }
-
-  97% {
-    transform: translateX(2px);
-  }
+  color: var(--text);
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.35);
 }
 
 @media (max-width: 1280px) {
   .uiGrid {
-    grid-template-columns: 280px minmax(0, 1fr) 300px;
+    grid-template-columns: 260px minmax(0, 1fr) 300px;
   }
 }
 
 @media (max-width: 1100px) {
   .simulatorApp {
     overflow: auto;
-    min-height: 100%;
   }
 
   .uiGrid {
+    position: relative;
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto auto;
+    grid-template-rows: auto;
     gap: 12px;
     padding: 12px;
-    min-height: auto;
+    min-height: 100vh;
   }
 
   .centerOverlay {
     grid-column: 1;
-    grid-row: 3;
-    min-height: 55vh;
-    border: 1px solid rgba(88, 136, 255, 0.3);
+    grid-row: auto;
+    min-height: 54vh;
+    border: 1px solid rgba(0, 212, 255, 0.16);
     border-radius: 16px;
-    background: rgba(8, 16, 39, 0.28);
+    background: rgba(4, 10, 20, 0.34);
     backdrop-filter: blur(8px);
     overflow: hidden;
   }
 
+  .eventCard,
   .telemetryOverlay {
     position: static;
+  }
+
+  .eventCard {
+    margin: 16px 16px 0;
+  }
+
+  .telemetryOverlay {
     margin: 16px;
-    background: rgba(8, 18, 42, 0.55);
-    border: 1px solid rgba(88, 136, 255, 0.26);
+    background: rgba(6, 16, 32, 0.6);
+    border: 1px solid rgba(0, 212, 255, 0.14);
     border-radius: 12px;
     padding: 12px;
+    flex-direction: column;
   }
 }

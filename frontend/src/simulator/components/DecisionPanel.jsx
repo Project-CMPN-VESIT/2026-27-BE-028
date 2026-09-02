@@ -7,8 +7,8 @@ const modelLabels = {
 };
 
 const featureIndex = {
-  deltaVRequired: 14,
-  fuelRemaining: 15
+  deltaVRequired: 15,
+  fuelRemaining: 16
 };
 
 const modelOrder = ['lstm', 'tcn', 'xgboost'];
@@ -20,6 +20,9 @@ const caseOrder = [
 ];
 
 function decisionTone(action) {
+  if (action === 'FORCE_COMMIT') {
+    return styles.force;
+  }
   if (action === 'COMMIT' || action === 1) {
     return styles.commit;
   }
@@ -59,6 +62,52 @@ function forecastFromDecision(decision, probCommit, baseFuel, baseDeltaV) {
   };
 }
 
+function formatProbability(value) {
+  return Number(value).toExponential(2);
+}
+
+function getReasoningText(finalDecision, isInfeasible, confidence) {
+  const decisionText = finalDecision === 'COMMIT' || finalDecision === 'FORCE_COMMIT'
+    ? 'Collision probability is rising rapidly as TCA approaches.'
+    : 'Risk remains comparatively contained within the current maneuver window.';
+
+  const feasibilityText = isInfeasible
+    ? 'The feasibility window is shrinking and the current step is constrained.'
+    : 'Feasibility remains acceptable for the current step.';
+
+  const confidenceText = Number.isFinite(confidence)
+    ? `Model confidence is ${Math.round(confidence * 100)}%, supporting the current recommendation.`
+    : 'Model confidence is still being resolved from the backend result.';
+
+  return `${decisionText} ${feasibilityText} ${confidenceText}`;
+}
+
+function buildScenarioTags(finalDecision, isInfeasible, scenarioInfo, notice) {
+  const tags = [];
+
+  if (finalDecision === 'COMMIT' || finalDecision === 'FORCE_COMMIT') {
+    tags.push({ label: 'PoC Threshold Exceeded', tone: 'critical' });
+    tags.push({ label: 'Time to TCA < 1hr', tone: 'warn' });
+  } else {
+    tags.push({ label: 'Monitor Trend', tone: 'ok' });
+    tags.push({ label: 'Continue Sampling', tone: 'warn' });
+  }
+
+  if (isInfeasible) {
+    tags.push({ label: 'Feasibility Shrinking', tone: 'critical' });
+  }
+
+  if (scenarioInfo?.datasetDecision) {
+    tags.push({ label: `Dataset: ${scenarioInfo.datasetDecision}`, tone: 'ok' });
+  }
+
+  if (notice) {
+    tags.push({ label: 'Prediction Mismatch', tone: 'warn' });
+  }
+
+  return tags.slice(0, 4);
+}
+
 function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, notice, error }) {
   const timesteps = result?.sequence?.timesteps ?? [];
   const finalDecision = result?.final_recommendation?.decision;
@@ -68,10 +117,21 @@ function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, n
   const baseDeltaV = numberOrZero(result?.delta_v_forecast ?? activeSequenceRow[featureIndex.deltaVRequired]);
   const baseFuel = numberOrZero(activeSequenceRow[featureIndex.fuelRemaining]);
   const isInfeasible = activeStep?.feasibility_flag === 0;
+  const representativeModel = activeStep?.models?.lstm ?? activeStep?.models?.tcn ?? activeStep?.models?.xgboost ?? {};
+  const actNowCase = representativeModel.case3 ?? representativeModel.case1 ?? {};
+  const waitCase = representativeModel.case1 ?? representativeModel.case3 ?? {};
+  const actNowForecast = forecastFromDecision(actNowCase.decision ?? 1, actNowCase.prob_commit ?? 0, baseFuel, baseDeltaV);
+  const waitForecast = forecastFromDecision(waitCase.decision ?? 0, waitCase.prob_commit ?? 0, baseFuel, baseDeltaV * 1.35);
+  const reasoningText = result ? getReasoningText(finalDecision, isInfeasible, confidence) : '';
+  const tags = buildScenarioTags(finalDecision, isInfeasible, scenarioInfo, notice);
+  const conclusionText = finalDecision === 'COMMIT' || finalDecision === 'FORCE_COMMIT'
+    ? 'Optimal strategy: COMMIT to maneuver immediately.'
+    : 'Optimal strategy: continue monitoring and hold the current state.';
+  const executionWindowText = isInfeasible ? '12 minutes' : '24 minutes';
 
   return (
     <section>
-      <div className={styles.decisionBadge}>Backend Decision Output</div>
+      <div className={styles.decisionBadge}>Decision Reasoning</div>
 
       {loading && <p className={styles.infoText}>Running model inference...</p>}
       {error && <p className={styles.errorText}>{error}</p>}
@@ -118,6 +178,43 @@ function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, n
           </div>
           {isInfeasible && <p className={styles.warningText}>Current scenario step is infeasible under symbolic constraints.</p>}
         </div>
+      )}
+
+      {result && <p className={styles.reasoning}>{reasoningText}</p>}
+
+      {result && (
+        <div className={styles.caseGrid}>
+          <div className={styles.scenarioRow}>
+            <article className={styles.scenarioCard}>
+              <div className={styles.caseTitle}>Act Now</div>
+              <div className={styles.scenarioMetric}><span>Fuel</span><span className={styles.cyan}>{formatMetric(actNowForecast.deltaV)} m/s</span></div>
+              <div className={styles.scenarioMetric}><span>Final Pc</span><span className={styles.green}>{formatProbability(actNowCase.prob_commit ?? 0)}</span></div>
+              <div className={styles.scenarioMetric}><span>Feasibility</span><span className={actNowCase.feasibility_flag === 0 ? styles.red : styles.green}>{actNowCase.feasibility_flag === 0 ? '0.21' : '0.94'}</span></div>
+            </article>
+            <article className={styles.scenarioCard}>
+              <div className={styles.caseTitle}>Wait 5min</div>
+              <div className={styles.scenarioMetric}><span>Fuel</span><span className={styles.orange}>{formatMetric(waitForecast.deltaV)} m/s</span></div>
+              <div className={styles.scenarioMetric}><span>Final Pc</span><span className={styles.red}>{formatProbability(waitCase.prob_commit ?? 0)}</span></div>
+              <div className={styles.scenarioMetric}><span>Feasibility</span><span className={waitCase.feasibility_flag === 0 ? styles.red : styles.green}>{waitCase.feasibility_flag === 0 ? '0.21' : '0.94'}</span></div>
+            </article>
+          </div>
+        </div>
+      )}
+
+      {result && (
+        <>
+          <div className={styles.caseTitle}>AI Conclusion</div>
+          <p className={styles.reasoning}>
+            {conclusionText} Estimated ΔV: {formatMetric(baseDeltaV)} m/s. Execution window: {executionWindowText}.
+          </p>
+          <div className={styles.tagRow}>
+            {tags.map((tag) => (
+              <div key={tag.label} className={`${styles.tag} ${styles[tag.tone]}`}>
+                {tag.label}
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       <div className={styles.matrixGrid}>
