@@ -1,0 +1,2 @@
+benchmark,true_ate,estimated_ate,ate_bias,ci_lower_95,ci_upper_95,is_recovered,naive_confounded_ate,placebo_ate,placebo_passed,random_common_cause_diff,random_common_cause_passed,counterfactual_error,counterfactual_passed,benchmark_status
+Synthetic_SCM_Ground_Truth,4.5,4.461621042092132,0.03837895790786838,4.406579787866064,4.5166622963181995,True,16.286333087757985,0.042600818944151186,True,0.0008863916954071627,True,0.07675791581573321,True,PASSED

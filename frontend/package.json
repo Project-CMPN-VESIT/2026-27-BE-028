@@ -26,7 +26,8 @@
     "recharts": "^2.12.7",
     "zustand": "^5.0.1",
     "tailwindcss": "^4.2.2",
-    "three": "^0.160.0"
+    "three": "^0.160.0",
+    "lucide-react": "^0.460.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",

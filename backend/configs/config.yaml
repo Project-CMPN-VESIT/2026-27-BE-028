@@ -1,0 +1,243 @@
+project:
+  name: "Research-Grade Causal + XAI + Neuro-Symbolic Analysis Framework"
+  domain: "Satellite Collision Avoidance & Maneuver Commitment"
+  version: "1.0.0"
+  seed: 42
+  device: "cpu" # deterministic execution across environments
+
+data:
+  dataset_path: "resources/capstone_final_merged_dataset.csv"
+  total_rows: 60000
+  total_events: 3000
+  steps_per_event: 20
+  event_col: "event_id"
+  time_col: "time_index"
+  target_col: "commit_decision"
+  orbit_col: "orbit_type"
+  split:
+    train_ratio: 0.70
+    val_ratio: 0.15
+    test_ratio: 0.15
+    strategy: "group_shuffle_split"
+    group_col: "event_id"
+    seed: 42
+
+features:
+  neural_33:
+    - "last_observation_age"
+    - "max_delta_v"
+    - "satellite_mass"
+    - "hard_body_radius"
+    - "measurement_noise"
+    - "rel_pos_x"
+    - "rel_pos_y"
+    - "rel_pos_z"
+    - "rel_vel_x"
+    - "rel_vel_y"
+    - "rel_vel_z"
+    - "sigma_r"
+    - "sigma_t"
+    - "sigma_n"
+    - "obj_sigma_r"
+    - "obj_sigma_t"
+    - "obj_sigma_n"
+    - "solar_activity"
+    - "drag_level"
+    - "max_thrust"
+    - "eccentricity"
+    - "inclination"
+    - "semi_major_axis"
+    - "perigee"
+    - "apogee"
+    - "relative_distance"
+    - "relative_speed"
+    - "relative_closing_rate"
+    - "satellite_covariance_magnitude"
+    - "object_covariance_magnitude"
+    - "combined_covariance_magnitude"
+    - "tracking_reliability_index"
+    - "fuel_margin"
+
+  patchtst_44:
+    - "time_to_TCA"
+    - "last_observation_age"
+    - "fuel_remaining"
+    - "max_delta_v"
+    - "satellite_mass"
+    - "hard_body_radius"
+    - "measurement_noise"
+    - "rel_pos_x"
+    - "rel_pos_y"
+    - "rel_pos_z"
+    - "rel_vel_x"
+    - "rel_vel_y"
+    - "rel_vel_z"
+    - "sigma_r"
+    - "sigma_t"
+    - "sigma_n"
+    - "obj_sigma_r"
+    - "obj_sigma_t"
+    - "obj_sigma_n"
+    - "solar_activity"
+    - "drag_level"
+    - "max_thrust"
+    - "eccentricity"
+    - "inclination"
+    - "semi_major_axis"
+    - "perigee"
+    - "apogee"
+    - "relative_distance"
+    - "relative_speed"
+    - "relative_closing_rate"
+    - "satellite_covariance_magnitude"
+    - "object_covariance_magnitude"
+    - "combined_covariance_magnitude"
+    - "tracking_reliability_index"
+    - "maneuver_capability_score"
+    - "environmental_disturbance_index"
+    - "poc"
+    - "risk_score"
+    - "deltav_required"
+    - "fuel_margin"
+    - "maneuver_window_remaining"
+    - "orbit_type_GEO"
+    - "orbit_type_LEO"
+    - "orbit_type_MEO"
+
+  xgboost_45:
+    - "time_index"
+    - "time_to_TCA"
+    - "last_observation_age"
+    - "fuel_remaining"
+    - "max_delta_v"
+    - "satellite_mass"
+    - "hard_body_radius"
+    - "measurement_noise"
+    - "rel_pos_x"
+    - "rel_pos_y"
+    - "rel_pos_z"
+    - "rel_vel_x"
+    - "rel_vel_y"
+    - "rel_vel_z"
+    - "sigma_r"
+    - "sigma_t"
+    - "sigma_n"
+    - "obj_sigma_r"
+    - "obj_sigma_t"
+    - "obj_sigma_n"
+    - "solar_activity"
+    - "drag_level"
+    - "max_thrust"
+    - "eccentricity"
+    - "inclination"
+    - "semi_major_axis"
+    - "perigee"
+    - "apogee"
+    - "relative_distance"
+    - "relative_speed"
+    - "relative_closing_rate"
+    - "satellite_covariance_magnitude"
+    - "object_covariance_magnitude"
+    - "combined_covariance_magnitude"
+    - "tracking_reliability_index"
+    - "maneuver_capability_score"
+    - "environmental_disturbance_index"
+    - "poc"
+    - "risk_score"
+    - "deltav_required"
+    - "fuel_margin"
+    - "maneuver_window_remaining"
+    - "orbit_type_GEO"
+    - "orbit_type_LEO"
+    - "orbit_type_MEO"
+
+  symbolic_vars:
+    - "feasibility_flag"
+    - "time_to_TCA"
+    - "maneuver_window_remaining"
+    - "fuel_remaining"
+    - "deltav_required"
+    - "cost_of_acting"
+    - "cost_of_waiting"
+    - "poc"
+    - "fuel_margin"
+    - "max_delta_v"
+
+models:
+  gru:
+    checkpoint: "resources/final_physics_regularized_gru.pth"
+    scaler: "resources/NeuroSymbolic_LSTM_scaler.pkl"
+    type: "recurrent"
+    input_dim: 33
+    output_type: "per_timestep"
+    decision_threshold: 0.50
+
+  lstm:
+    checkpoint: "resources/NeuroSymbolic_LSTM_final.pt.zip"
+    scaler: "resources/NeuroSymbolic_LSTM_scaler.pkl"
+    type: "recurrent"
+    input_dim: 33
+    output_type: "per_timestep"
+    decision_threshold: 0.50
+
+  tcn:
+    checkpoint: "resources/satellite_tcn_modelt4.pt.zip"
+    scaler: "resources/NeuroSymbolic_LSTM_scaler.pkl"
+    type: "convolutional"
+    input_dim: 33
+    output_type: "per_timestep"
+    decision_threshold: 0.44
+
+  transformer:
+    checkpoint: "resources/causal_transformer_physics.pt.zip"
+    scaler: "resources/NeuroSymbolic_LSTM_scaler.pkl"
+    type: "attention"
+    input_dim: 33
+    output_type: "per_timestep"
+    decision_threshold: 0.50
+
+  patchtst:
+    checkpoint: "resources/patchtst_model.pt.zip"
+    type: "patch_transformer"
+    input_dim: 44
+    output_type: "event_level"
+    decision_threshold: 0.50
+
+  xgboost:
+    checkpoint: "resources/xgboost_model.pt.zip"
+    type: "tree_ensemble"
+    input_dim: 45
+    output_type: "tabular_probabilities"
+    decision_threshold: 0.50
+
+xai:
+  integrated_gradients:
+    n_steps: 500
+    method: "gausslegendre"
+    baseline: "zeros"
+  tree_shap:
+    background_samples: 100
+  faithfulness:
+    perturbation_steps: [0.1, 0.2, 0.3, 0.5, 0.7, 1.0]
+    metric: "area_over_perturbation_curve"
+  stability:
+    noise_level: 0.05
+    n_trials: 10
+    top_k: [1, 3, 5]
+
+physics_shield:
+  rules:
+    delta_v_feasibility:
+      type: "Type A (Hard Physical Constraint)"
+      condition: "deltav_required > max_delta_v"
+      action: "override_to_wait"
+    tca_passed:
+      type: "Type A (Hard Temporal Constraint)"
+      condition: "time_to_TCA <= 0"
+      action: "override_to_wait"
+    window_expired:
+      type: "Type A (Hard Operational Constraint)"
+      condition: "maneuver_window_remaining <= 0"
+      action: "override_to_wait"
+
+artifacts_dir: "research_artifacts"

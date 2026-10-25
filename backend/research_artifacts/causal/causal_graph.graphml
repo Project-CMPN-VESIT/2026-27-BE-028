@@ -1,0 +1,100 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd"><key id="d0" for="edge" attr.name="reason" attr.type="string"/>
+<graph edgedefault="directed"><node id="semi_major_axis"/>
+<node id="relative_distance"/>
+<node id="eccentricity"/>
+<node id="inclination"/>
+<node id="relative_closing_rate"/>
+<node id="measurement_noise"/>
+<node id="combined_covariance_magnitude"/>
+<node id="tracking_reliability_index"/>
+<node id="solar_activity"/>
+<node id="drag_level"/>
+<node id="poc"/>
+<node id="hard_body_radius"/>
+<node id="deltav_required"/>
+<node id="time_to_TCA"/>
+<node id="feasibility_flag"/>
+<node id="max_delta_v"/>
+<node id="fuel_margin"/>
+<node id="fuel_remaining"/>
+<node id="maneuver_window_remaining"/>
+<node id="cost_of_waiting"/>
+<node id="cost_of_acting"/>
+<node id="commit_decision"/>
+<edge source="semi_major_axis" target="relative_distance">
+  <data key="d0">Orbital geometry defines encounter trajectory</data>
+</edge>
+<edge source="relative_distance" target="relative_closing_rate">
+  <data key="d0">Kinematic rate of change</data>
+</edge>
+<edge source="relative_distance" target="poc">
+  <data key="d0">Distance to conjunction center directly scales collision probability</data>
+</edge>
+<edge source="relative_distance" target="deltav_required">
+  <data key="d0">Required impulsive delta-V scales with miss distance deficit</data>
+</edge>
+<edge source="eccentricity" target="relative_distance">
+  <data key="d0">Orbital geometry defines encounter trajectory</data>
+</edge>
+<edge source="inclination" target="relative_closing_rate">
+  <data key="d0">Inclination difference determines encounter geometry</data>
+</edge>
+<edge source="relative_closing_rate" target="deltav_required">
+  <data key="d0">Encounter velocity dictates required orbital impulse</data>
+</edge>
+<edge source="measurement_noise" target="combined_covariance_magnitude">
+  <data key="d0">Sensor noise inflates positional uncertainty</data>
+</edge>
+<edge source="combined_covariance_magnitude" target="poc">
+  <data key="d0">Foster / NASA 2D/3D collision integral over covariance ellipsoid</data>
+</edge>
+<edge source="tracking_reliability_index" target="combined_covariance_magnitude">
+  <data key="d0">Tracking quality bounds covariance growth</data>
+</edge>
+<edge source="solar_activity" target="combined_covariance_magnitude">
+  <data key="d0">Atmospheric drag disturbance induces orbital error</data>
+</edge>
+<edge source="drag_level" target="combined_covariance_magnitude">
+  <data key="d0">Atmospheric drag disturbance induces orbital error</data>
+</edge>
+<edge source="poc" target="cost_of_waiting">
+  <data key="d0">Risk cost of waiting is a monotonic function of collision probability</data>
+</edge>
+<edge source="hard_body_radius" target="poc">
+  <data key="d0">Combined hard-body sphere collision cross-section</data>
+</edge>
+<edge source="deltav_required" target="feasibility_flag">
+  <data key="d0">Hard physical law: feasibility_flag = 1 iff deltav_required &lt;= max_delta_v</data>
+</edge>
+<edge source="deltav_required" target="fuel_margin">
+  <data key="d0">Fuel margin depletes with required delta-V</data>
+</edge>
+<edge source="deltav_required" target="cost_of_acting">
+  <data key="d0">Act cost scales with fuel depletion and propellant expenditure</data>
+</edge>
+<edge source="time_to_TCA" target="deltav_required">
+  <data key="d0">Delta-V required scales inversely with lead time before TCA: delta_r = delta_v * delta_t</data>
+</edge>
+<edge source="time_to_TCA" target="maneuver_window_remaining">
+  <data key="d0">Maneuver window strictly bounded by time remaining to TCA</data>
+</edge>
+<edge source="time_to_TCA" target="cost_of_waiting">
+  <data key="d0">Waiting cost increases as decision horizon shrinks</data>
+</edge>
+<edge source="feasibility_flag" target="commit_decision">
+  <data key="d0">Hard constraint: Infeasible state forces WAIT</data>
+</edge>
+<edge source="max_delta_v" target="feasibility_flag">
+  <data key="d0">Spacecraft thruster velocity capacity limit</data>
+</edge>
+<edge source="fuel_remaining" target="fuel_margin">
+  <data key="d0">Available propellant mass bounds remaining margin</data>
+</edge>
+<edge source="cost_of_waiting" target="commit_decision">
+  <data key="d0">Commit triggered when waiting risk exceeds maneuver cost</data>
+</edge>
+<edge source="cost_of_acting" target="commit_decision">
+  <data key="d0">Commit triggered when waiting risk exceeds maneuver cost</data>
+</edge>
+</graph></graphml>

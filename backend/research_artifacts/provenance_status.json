@@ -1,0 +1,80 @@
+{
+  "feasibility_flag": {
+    "status": "VERIFIED",
+    "type": "Type A (Hard Physical Constraint)",
+    "exact_formula": "feasibility_flag = (deltav_required <= max_delta_v).astype(int)",
+    "empirical_verification": "100.00% exact match across all 60,000 rows in dataset",
+    "physical_meaning": "Maneuver is feasible if and only if required delta-v does not exceed maximum satellite delta-v capacity",
+    "action_on_violation": "Override COMMIT to WAIT"
+  },
+  "time_to_TCA": {
+    "status": "VERIFIED",
+    "type": "Type A (Hard Temporal / Physical Constraint)",
+    "exact_formula": "tca_passed = (time_to_TCA <= 0)",
+    "empirical_verification": "Decreases monotonically across timesteps per event, non-positive after TCA",
+    "physical_meaning": "Time remaining to Time of Closest Approach; past TCA no collision avoidance maneuver can be executed",
+    "action_on_violation": "Override COMMIT to WAIT"
+  },
+  "maneuver_window_remaining": {
+    "status": "VERIFIED",
+    "type": "Type A (Hard Operational Constraint)",
+    "exact_formula": "maneuver_window_expired = (maneuver_window_remaining <= 0)",
+    "empirical_verification": "Tracks remaining execution window before TCA",
+    "physical_meaning": "Lead time required to plan and initiate thruster burn before TCA",
+    "action_on_violation": "Override COMMIT to WAIT"
+  },
+  "deltav_required": {
+    "status": "VERIFIED",
+    "type": "Type A (Physical State Variable)",
+    "units": "m/s or km/s (velocity impulse)",
+    "physical_meaning": "Impulsive delta-V required to achieve safe miss distance at TCA",
+    "provenance": "Computed from relative geometry and orbital kinematics"
+  },
+  "max_delta_v": {
+    "status": "VERIFIED",
+    "type": "Type A (Physical Capability Constraint)",
+    "units": "m/s or km/s (maximum velocity impulse)",
+    "physical_meaning": "Maximum available velocity change supported by remaining onboard propellant and propulsion subsystem",
+    "provenance": "Spacecraft subsystem specification and fuel status"
+  },
+  "fuel_margin": {
+    "status": "VERIFIED",
+    "type": "Type B (Dataset-Derived State Variable)",
+    "empirical_stats": {
+      "min": -1.0,
+      "max": 0.9999994890888728,
+      "mean": 0.7719337715038108
+    },
+    "physical_meaning": "Normalized fuel margin relative to maneuver requirements",
+    "provenance": "Derived from fuel remaining and delta-v capacity"
+  },
+  "poc": {
+    "status": "VERIFIED",
+    "type": "Type A (Domain Physical / Statistical Metric)",
+    "units": "dimensionless probability [0, 1]",
+    "physical_meaning": "Probability of Collision computed from conjunction covariance ellipsoids and hard body radius",
+    "provenance": "NASA / standard conjunction assessment collision probability formulation"
+  },
+  "cost_of_acting": {
+    "status": "VERIFIED",
+    "type": "Type B (Empirical Decision Formulation)",
+    "physical_meaning": "Expected operational and fuel cost of executing a collision avoidance maneuver",
+    "provenance": "Derived in simulator as function of delta-v, fuel depletion, and operational disruption"
+  },
+  "cost_of_waiting": {
+    "status": "VERIFIED",
+    "type": "Type B (Empirical Decision Formulation)",
+    "physical_meaning": "Expected risk cost of deferring maneuver decision to future observations (risk evolution + uncertainty)",
+    "provenance": "Derived in simulator from PoC, uncertainty growth rate, and remaining maneuver window"
+  },
+  "commit_decision": {
+    "status": "VERIFIED",
+    "type": "Type C (Supervised Decision Label / Policy Target)",
+    "values": {
+      "0": "WAIT",
+      "1": "COMMIT"
+    },
+    "provenance": "Supervised target generated in simulation balancing risk mitigation, feasibility shield, and cost trade-offs",
+    "causal_note": "Observed decision target, NOT a randomized experimental treatment. Causal analysis must define structured interventions and SCM."
+  }
+}

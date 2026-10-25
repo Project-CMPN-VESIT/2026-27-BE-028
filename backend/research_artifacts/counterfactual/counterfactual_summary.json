@@ -1,0 +1,10 @@
+{
+  "total_scenarios_evaluated": 180,
+  "physically_admissible_count": 91,
+  "physically_admissible_rate": 0.5055555555555555,
+  "operationally_actionable_count": 90,
+  "operationally_actionable_rate": 0.5,
+  "physics_violation_rate": 0.49444444444444446,
+  "rejection_rate_non_actionable": 0.5,
+  "actionable_event_lead_time_benefit": "Structural lead-time advance (+30s) reduces delta-V by ~99% on actionable events prior to TCA."
+}

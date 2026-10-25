@@ -1,0 +1,130 @@
+[
+  {
+    "file_name": "Capstone_GRU_Model.ipynb",
+    "relative_path": "resources/Capstone_GRU_Model.ipynb",
+    "file_type": "jupyter_notebook",
+    "size_bytes": 187922,
+    "sha256": "39eb4bab8fb831cb637a5a7e66f8a0035de158a04aa5e445d9f41b88d69ec1b4",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "Copy_of_TCN_NeuroSymbolic_Final_Training_new_test5.ipynb",
+    "relative_path": "resources/Copy_of_TCN_NeuroSymbolic_Final_Training_new_test5.ipynb",
+    "file_type": "jupyter_notebook",
+    "size_bytes": 224288,
+    "sha256": "36c3c6f4cba8b77e71914612b2a975d5e9d52fb88d8a45ce5261db0674adf5f5",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "Group_28_Capstone_project (1).pdf",
+    "relative_path": "resources/Group_28_Capstone_project (1).pdf",
+    "file_type": "technical_documentation_presentation",
+    "size_bytes": 11223632,
+    "sha256": "90879cd7497d77b68fdf1b3acf70a06a79f91f8c547ec4d78e70fe5d5a55b476",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "LSTM_Model_Symbolic_Riddhi_Symbolic (1).ipynb",
+    "relative_path": "resources/LSTM_Model_Symbolic_Riddhi_Symbolic (1).ipynb",
+    "file_type": "jupyter_notebook",
+    "size_bytes": 491746,
+    "sha256": "34ae2234dbfbf58c35f6c8c5b294f73b222c8285c66103a0efa3285dd4e3b4e4",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "NeuroSymbolic_LSTM_final.pt.zip",
+    "relative_path": "resources/NeuroSymbolic_LSTM_final.pt.zip",
+    "file_type": "model_checkpoint_archive",
+    "size_bytes": 902318,
+    "sha256": "2338fa26ab6372e69569d49c2f07710561a1bb88a3ae968880e6125aebf26df5",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "Synopsis Capstone Project.pdf",
+    "relative_path": "resources/Synopsis Capstone Project.pdf",
+    "file_type": "technical_documentation_presentation",
+    "size_bytes": 810664,
+    "sha256": "6f0d11eac1f63475fcfaca782bd8eff51bc8210a27c1f49aace3dcb4d1b00c6b",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "Transformer_Encoder.ipynb",
+    "relative_path": "resources/Transformer_Encoder.ipynb",
+    "file_type": "jupyter_notebook",
+    "size_bytes": 378690,
+    "sha256": "38726d97746e53277d3f0b8cd825693b3d929e739eb0a2840ef63c01720e03e6",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "Xgboost- updated Symbolic layer.pdf",
+    "relative_path": "resources/Xgboost- updated Symbolic layer.pdf",
+    "file_type": "technical_documentation_presentation",
+    "size_bytes": 329110,
+    "sha256": "cd329105409ca7d07019477bc204e556e6658c675a94980898dc4b177c02378c",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "capstone_final_merged_dataset.csv",
+    "relative_path": "resources/capstone_final_merged_dataset.csv",
+    "file_type": "dataset",
+    "size_bytes": 48224983,
+    "sha256": "d721f57a7637d562ebe97a1b6ba3f6fd2aeafc1328aac7558e350fd75f1bc620",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "causal_forest_explainer_gru.pkl",
+    "relative_path": "resources/causal_forest_explainer_gru.pkl",
+    "file_type": "pickle_artifact",
+    "size_bytes": 155922062,
+    "sha256": "a78fc1e185b55e84255cd76df23683ee80e8534a2e14de1ccb92d3274d386408",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "causal_transformer_physics.pt.zip",
+    "relative_path": "resources/causal_transformer_physics.pt.zip",
+    "file_type": "model_checkpoint_archive",
+    "size_bytes": 1136549,
+    "sha256": "ad608b2d04da505a96749e919da1fbee9326863eb3d4718fe0682f0f3ce4ff99",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "final_physics_regularized_gru.pth",
+    "relative_path": "resources/final_physics_regularized_gru.pth",
+    "file_type": "pytorch_checkpoint",
+    "size_bytes": 685679,
+    "sha256": "fc2d4bc8b2c85ace5b0c3a2dd2e9cc08ea360f86bc5401cc1e83d4b309803881",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "patchtest.ipynb",
+    "relative_path": "resources/patchtest.ipynb",
+    "file_type": "jupyter_notebook",
+    "size_bytes": 136374,
+    "sha256": "97e072b7d45c63e3a18bcff4575c97592f9ccfdac01c2e7faea692da98711282",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "patchtst_model.pt.zip",
+    "relative_path": "resources/patchtst_model.pt.zip",
+    "file_type": "model_checkpoint_archive",
+    "size_bytes": 7208121,
+    "sha256": "587d4913405496e2e95a17f5999374720660463c607b77cd0131f22590c57828",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "satellite_tcn_modelt4.pt.zip",
+    "relative_path": "resources/satellite_tcn_modelt4.pt.zip",
+    "file_type": "model_checkpoint_archive",
+    "size_bytes": 285175,
+    "sha256": "c265077e01ecb8a2f9cad0bd4f33efd1c3c49dd443e435e1632d3a4490f0608c",
+    "status": "VERIFIED"
+  },
+  {
+    "file_name": "xgboost_model.pt.zip",
+    "relative_path": "resources/xgboost_model.pt.zip",
+    "file_type": "model_checkpoint_archive",
+    "size_bytes": 753041,
+    "sha256": "c1ffc048fd6ebc8b75e3bcb97aefe03a4ec410d397e6cf7a130cde77b6dbbc84",
+    "status": "VERIFIED"
+  }
+]

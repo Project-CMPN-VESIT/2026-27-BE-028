@@ -1,11 +1,11 @@
 export const APP_NAME = 'OrbitalX';
 
 export const NAV_ITEMS = [
-  { label: 'Landing', path: '/' },
-  { label: 'Dashboard', path: '/dashboard' },
-  { label: 'Simulation', path: '/simulation' },
-  { label: 'Critical Mode', path: '/critical' },
-  { label: 'Analytics', path: '/analytics' },
-  { label: 'Validation', path: '/validation' },
+  { label: 'Overview', path: '/dashboard' },
   { label: 'Data Explorer', path: '/data-explorer' },
+  { label: 'Simulation', path: '/simulation' },
+  { label: 'Causal Analysis', path: '/causal' },
+  { label: 'What-If Analysis', path: '/what-if' },
+  { label: 'Explainable AI', path: '/xai' },
+  { label: 'Analytics & Safety', path: '/analytics' },
 ] as const;

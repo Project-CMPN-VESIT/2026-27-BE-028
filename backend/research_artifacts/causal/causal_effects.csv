@@ -1,0 +1,2 @@
+treatment,outcome,adjustment_set,estimated_ate,std_error,p_value,ci_lower_95,ci_upper_95,robustness_status
+deltav_required,poc,time_to_TCA;relative_distance;relative_closing_rate;combined_covariance_magnitude,-0.014993963666604809,0.0012007640004229447,1.0173011665866476e-35,-0.017347485727631767,-0.012640441605577852,ROBUST

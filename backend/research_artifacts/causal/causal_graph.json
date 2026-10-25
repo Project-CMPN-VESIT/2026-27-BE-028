@@ -1,0 +1,154 @@
+{
+  "nodes": [
+    "semi_major_axis",
+    "relative_distance",
+    "eccentricity",
+    "inclination",
+    "relative_closing_rate",
+    "measurement_noise",
+    "combined_covariance_magnitude",
+    "tracking_reliability_index",
+    "solar_activity",
+    "drag_level",
+    "poc",
+    "hard_body_radius",
+    "deltav_required",
+    "time_to_TCA",
+    "feasibility_flag",
+    "max_delta_v",
+    "fuel_margin",
+    "fuel_remaining",
+    "maneuver_window_remaining",
+    "cost_of_waiting",
+    "cost_of_acting",
+    "commit_decision"
+  ],
+  "edges": [
+    {
+      "source": "semi_major_axis",
+      "target": "relative_distance",
+      "justification": "Orbital geometry defines encounter trajectory"
+    },
+    {
+      "source": "relative_distance",
+      "target": "relative_closing_rate",
+      "justification": "Kinematic rate of change"
+    },
+    {
+      "source": "relative_distance",
+      "target": "poc",
+      "justification": "Distance to conjunction center directly scales collision probability"
+    },
+    {
+      "source": "relative_distance",
+      "target": "deltav_required",
+      "justification": "Required impulsive delta-V scales with miss distance deficit"
+    },
+    {
+      "source": "eccentricity",
+      "target": "relative_distance",
+      "justification": "Orbital geometry defines encounter trajectory"
+    },
+    {
+      "source": "inclination",
+      "target": "relative_closing_rate",
+      "justification": "Inclination difference determines encounter geometry"
+    },
+    {
+      "source": "relative_closing_rate",
+      "target": "deltav_required",
+      "justification": "Encounter velocity dictates required orbital impulse"
+    },
+    {
+      "source": "measurement_noise",
+      "target": "combined_covariance_magnitude",
+      "justification": "Sensor noise inflates positional uncertainty"
+    },
+    {
+      "source": "combined_covariance_magnitude",
+      "target": "poc",
+      "justification": "Foster / NASA 2D/3D collision integral over covariance ellipsoid"
+    },
+    {
+      "source": "tracking_reliability_index",
+      "target": "combined_covariance_magnitude",
+      "justification": "Tracking quality bounds covariance growth"
+    },
+    {
+      "source": "solar_activity",
+      "target": "combined_covariance_magnitude",
+      "justification": "Atmospheric drag disturbance induces orbital error"
+    },
+    {
+      "source": "drag_level",
+      "target": "combined_covariance_magnitude",
+      "justification": "Atmospheric drag disturbance induces orbital error"
+    },
+    {
+      "source": "poc",
+      "target": "cost_of_waiting",
+      "justification": "Risk cost of waiting is a monotonic function of collision probability"
+    },
+    {
+      "source": "hard_body_radius",
+      "target": "poc",
+      "justification": "Combined hard-body sphere collision cross-section"
+    },
+    {
+      "source": "deltav_required",
+      "target": "feasibility_flag",
+      "justification": "Hard physical law: feasibility_flag = 1 iff deltav_required <= max_delta_v"
+    },
+    {
+      "source": "deltav_required",
+      "target": "fuel_margin",
+      "justification": "Fuel margin depletes with required delta-V"
+    },
+    {
+      "source": "deltav_required",
+      "target": "cost_of_acting",
+      "justification": "Act cost scales with fuel depletion and propellant expenditure"
+    },
+    {
+      "source": "time_to_TCA",
+      "target": "deltav_required",
+      "justification": "Delta-V required scales inversely with lead time before TCA: delta_r = delta_v * delta_t"
+    },
+    {
+      "source": "time_to_TCA",
+      "target": "maneuver_window_remaining",
+      "justification": "Maneuver window strictly bounded by time remaining to TCA"
+    },
+    {
+      "source": "time_to_TCA",
+      "target": "cost_of_waiting",
+      "justification": "Waiting cost increases as decision horizon shrinks"
+    },
+    {
+      "source": "feasibility_flag",
+      "target": "commit_decision",
+      "justification": "Hard constraint: Infeasible state forces WAIT"
+    },
+    {
+      "source": "max_delta_v",
+      "target": "feasibility_flag",
+      "justification": "Spacecraft thruster velocity capacity limit"
+    },
+    {
+      "source": "fuel_remaining",
+      "target": "fuel_margin",
+      "justification": "Available propellant mass bounds remaining margin"
+    },
+    {
+      "source": "cost_of_waiting",
+      "target": "commit_decision",
+      "justification": "Commit triggered when waiting risk exceeds maneuver cost"
+    },
+    {
+      "source": "cost_of_acting",
+      "target": "commit_decision",
+      "justification": "Commit triggered when waiting risk exceeds maneuver cost"
+    }
+  ],
+  "is_dag": true
+}

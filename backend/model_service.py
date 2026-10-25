@@ -475,7 +475,17 @@ class ModelService:
                 self.commit_event_ids.append(eid)
             else:
                 self.wait_event_ids.append(eid)
-        print(f"[ModelService] Indexed {len(self.event_summaries)} events ({len(self.wait_event_ids)} WAIT, {len(self.commit_event_ids)} COMMIT).")
+
+        # Sort commit events so high-risk conjunctions (with actual collision probability) come first
+        self.commit_event_ids.sort(
+            key=lambda x: (
+                self.event_summaries[x]["riskLevel"] == "CRITICAL",
+                self.event_summaries[x]["riskLevel"] == "HIGH",
+                self.event_summaries[x]["probabilityOfCollision"]
+            ),
+            reverse=True
+        )
+        print(f"[ModelService] Indexed {len(self.event_summaries)} events ({len(self.wait_event_ids)} WAIT, {len(self.commit_event_ids)} COMMIT). High-risk commits prioritized: {self.commit_event_ids[:5]}.")
 
     def _load_all_models(self):
         print(f"[ModelService] Loading model artifacts from: {self.model_dir}")
@@ -604,13 +614,124 @@ class ModelService:
     # 3. SINGLE-EVENT EVALUATION (FOR SIMULATION)
     # -------------------------------------------------------------------------
 
+    def _ensure_event_loaded(self, event_id: int) -> bool:
+        """Loads an event on demand from research dataset if not in current registry."""
+        if event_id in self.event_sequences_33:
+            return True
+
+        res_path = BASE_DIR / "resources" / "capstone_final_merged_dataset.csv"
+        if not res_path.exists():
+            return False
+
+        try:
+            df_full = pd.read_csv(res_path)
+            ev_rows = df_full[df_full["event_id"] == event_id].sort_values("time_index")
+            if len(ev_rows) < 20:
+                return False
+
+            if "orbit_type" in ev_rows.columns:
+                ev_rows = ev_rows.copy()
+                ev_rows["orbit_type_GEO"] = (ev_rows["orbit_type"].astype(str).str.upper() == "GEO").astype(np.float32)
+                ev_rows["orbit_type_LEO"] = (ev_rows["orbit_type"].astype(str).str.upper() == "LEO").astype(np.float32)
+                ev_rows["orbit_type_MEO"] = (ev_rows["orbit_type"].astype(str).str.upper() == "MEO").astype(np.float32)
+
+            self.df = pd.concat([self.df, ev_rows], ignore_index=True)
+            grp_sorted = ev_rows.iloc[:20]
+            eid = int(event_id)
+            self.event_sequences_33[eid] = grp_sorted[self.feature_cols_33].values.astype(np.float32)
+            self.event_symbolic[eid] = grp_sorted[SYMBOLIC_COLS].copy()
+
+            last_row = grp_sorted.iloc[-1]
+            poc_val = float(last_row.get("poc", 0.0))
+            if poc_val == 0.0:
+                poc_val = float(grp_sorted["poc"].max())
+
+            if poc_val >= 0.05:
+                risk_level = "CRITICAL"
+            elif poc_val >= 0.02:
+                risk_level = "HIGH"
+            elif poc_val >= 0.005:
+                risk_level = "MEDIUM"
+            else:
+                risk_level = "LOW"
+
+            sat_name = f"SAT-{eid:04d}"
+            deb_name = f"DEB-{eid+1000:04d}"
+            rel_dist = float(last_row.get("relative_distance", 0.0))
+            rel_speed = float(last_row.get("relative_speed", 0.0))
+            time_to_tca = float(last_row.get("time_to_TCA", 0.0))
+            delta_v = float(last_row.get("deltav_required", 0.0))
+            fuel_rem = float(last_row.get("fuel_remaining", 100.0))
+
+            trend_samples = []
+            for _, step_row in grp_sorted.iterrows():
+                t_idx = int(step_row.get("time_index", 0))
+                p_c = float(step_row.get("poc", 0.0))
+                c_a = float(step_row.get("relative_distance", 0.0))
+                f_r = float(step_row.get("fuel_remaining", 100.0))
+                r_v = float(step_row.get("relative_speed", 0.0))
+                feas = int(step_row.get("feasibility_flag", 1))
+                trend_samples.append({
+                    "minute": t_idx,
+                    "probabilityOfCollision": p_c,
+                    "closestApproachKm": round(c_a, 2),
+                    "fuelRemainingPct": round(f_r, 1),
+                    "relativeVelocityKmS": round(r_v, 2),
+                    "confidencePct": 90 if feas else 40,
+                })
+
+            self.event_summaries[eid] = {
+                "id": str(eid),
+                "eventId": str(eid),
+                "event_id": eid,
+                "name": f"{sat_name} / {deb_name}",
+                "satelliteName": sat_name,
+                "debrisName": deb_name,
+                "primary_object": sat_name,
+                "secondary_object": deb_name,
+                "riskLevel": risk_level,
+                "risk_level": risk_level,
+                "probabilityOfCollision": poc_val,
+                "probability_of_collision": poc_val,
+                "collision_probability": poc_val,
+                "timeToTcaMinutes": round(time_to_tca, 1),
+                "time_to_tca": round(time_to_tca, 1),
+                "tca_minutes": round(time_to_tca, 1),
+                "closestApproachKm": round(rel_dist, 2),
+                "miss_distance": round(rel_dist, 2),
+                "relativeVelocityKmS": round(rel_speed, 2),
+                "relative_velocity": round(rel_speed, 2),
+                "deltaVKmS": round(delta_v, 2),
+                "delta_v_required": round(delta_v, 2),
+                "fuelRemainingPct": round(fuel_rem, 1),
+                "fuel_remaining": round(fuel_rem, 1),
+                "status": "Active Conjunction" if time_to_tca > 0 else "TCA Passed",
+                "location": f"LEO-{eid % 900 + 100}",
+                "updatedAt": "2026-04-27T07:00:00Z",
+                "inclinationDeg": round(float(last_row.get("inclination", 97.5)), 2),
+                "altitudeKm": round(float(last_row.get("perigee", 500.0)), 1),
+                "longitudeDeg": round((eid * 37.5) % 360, 2),
+                "tags": [risk_level, "LEO", "Feasible" if last_row.get("feasibility_flag", 1) > 0 else "Infeasible"],
+                "trend": trend_samples,
+                "dataset_decision": "COMMIT" if int(last_row.get("commit_decision", 0)) == 1 else "WAIT",
+            }
+            if int(last_row.get("commit_decision", 0)) == 1:
+                self.commit_event_ids.append(eid)
+            else:
+                self.wait_event_ids.append(eid)
+            return True
+        except Exception as e:
+            print(f"[ModelService] On-demand load error for event {event_id}: {e}")
+            return False
+
     def evaluate_event(self, event_id: int, current_step: int = 0) -> Dict[str, Any]:
         """
         Runs model-specific inference on all 6 models for event_id,
         applies the symbolic safety layer, and returns comprehensive simulator data.
         """
         if event_id not in self.event_sequences_33:
-            event_id = list(self.event_sequences_33.keys())[0]
+            if not self._ensure_event_loaded(event_id):
+                event_id = list(self.event_sequences_33.keys())[0]
 
         raw_33 = self.event_sequences_33[event_id]  # [20, 33]
         sym_df = self.event_symbolic[event_id]      # [20, 8]

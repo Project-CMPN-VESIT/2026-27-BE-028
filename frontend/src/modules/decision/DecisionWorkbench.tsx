@@ -42,6 +42,30 @@ export function DecisionWorkbench({ event, decision, critical }: DecisionWorkben
 
   return (
     <div className="space-y-5">
+      {/* DYNAMIC CRITICAL ALERT BANNER (MERGED FROM CRITICAL MODE) */}
+      {(critical || event?.riskLevel === 'CRITICAL' || decision?.status === 'FORCE_COMMIT') && (
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 p-5 text-white backdrop-blur-xl">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-rose-500 px-3 py-0.5 font-[Orbitron] text-xs font-bold uppercase tracking-wider text-white">
+                  CRITICAL EMERGENCY
+                </span>
+                <span className="font-[Orbitron] text-sm font-bold tracking-wider text-rose-200">
+                  IMMEDIATE MANEUVER COMMIT MANDATED
+                </span>
+              </div>
+              <p className="text-xs text-rose-100/80">
+                Conjunction probability of collision has exceeded NASA safety thresholds or burn window is collapsing. Execute recommended impulse immediately.
+              </p>
+            </div>
+            <div className="font-[Orbitron] text-2xl font-bold tracking-widest text-rose-300">
+              FORCE COMMIT
+            </div>
+          </div>
+        </div>
+      )}
+
       <GlassPanel className="p-5">
         <div className="flex items-start justify-between gap-4">
           <div>

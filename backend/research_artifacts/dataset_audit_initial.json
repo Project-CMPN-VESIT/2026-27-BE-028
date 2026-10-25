@@ -1,0 +1,464 @@
+{
+  "dataset_file": "resources/capstone_final_merged_dataset.csv",
+  "total_rows": 60000,
+  "total_columns": 48,
+  "total_events": 3000,
+  "rows_per_event": {
+    "min": 20,
+    "max": 20,
+    "mean": 20.0,
+    "median": 20.0,
+    "is_uniform_20_steps": true
+  },
+  "time_index_range": [
+    0,
+    20
+  ],
+  "target_variable": "commit_decision",
+  "target_distribution": {
+    "0_WAIT": 38476,
+    "1_COMMIT": 21524,
+    "commit_rate_pct": 35.873333333333335
+  },
+  "orbit_types": {
+    "LEO": 45180,
+    "GEO": 7660,
+    "MEO": 7160
+  },
+  "columns": {
+    "event_id": {
+      "dtype": "int64",
+      "null_count": 0,
+      "unique_count": 3000,
+      "min": 1.0,
+      "max": 6150.0,
+      "mean": 2543.0,
+      "std": 1879.0961967681728
+    },
+    "time_index": {
+      "dtype": "int64",
+      "null_count": 0,
+      "unique_count": 21,
+      "min": 0.0,
+      "max": 20.0,
+      "mean": 9.7,
+      "std": 5.780186575069532
+    },
+    "time_to_TCA": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 56940,
+      "min": -232.26081593115796,
+      "max": 1431.0515055968615,
+      "mean": 391.91782255861204,
+      "std": 419.62636500265694
+    },
+    "last_observation_age": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 48301,
+      "min": 0.0,
+      "max": 47.9074858109806,
+      "mean": 2.358253695250222,
+      "std": 6.410456965263563
+    },
+    "fuel_remaining": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 17187,
+      "min": 0.0469837447596069,
+      "max": 114.68194652610693,
+      "mean": 22.735818599512346,
+      "std": 23.762938869339916
+    },
+    "max_delta_v": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 17028,
+      "min": 9.70236539356316e-05,
+      "max": 79.76946040992672,
+      "mean": 5.997188581362483,
+      "std": 16.1549547433585
+    },
+    "satellite_mass": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 3000,
+      "min": 105.32397598557058,
+      "max": 4997.704849933662,
+      "mean": 1970.142258637856,
+      "std": 1326.534400731149
+    },
+    "hard_body_radius": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 3000,
+      "min": 0.0010005028560135,
+      "max": 9.99203532610768,
+      "mean": 1.0615104988838406,
+      "std": 2.344358195072716
+    },
+    "measurement_noise": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 48301,
+      "min": 0.0,
+      "max": 48.36735735405736,
+      "mean": 3.7361676833934196,
+      "std": 6.654382746063082
+    },
+    "rel_pos_x": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 60000,
+      "min": -172324.3561048199,
+      "max": 167285.77403507446,
+      "mean": -763.1780678914613,
+      "std": 20639.851095495567
+    },
+    "rel_pos_y": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 60000,
+      "min": -167637.6638080722,
+      "max": 193212.87360651465,
+      "mean": -73.24298259635133,
+      "std": 20323.584289422415
+    },
+    "rel_pos_z": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 60000,
+      "min": -132238.49671635265,
+      "max": 152962.47624806422,
+      "mean": -49.132593338277346,
+      "std": 14732.56167173651
+    },
+    "rel_vel_x": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 48600,
+      "min": -16.449226572512952,
+      "max": 16.178158920869762,
+      "mean": 0.09165728448401075,
+      "std": 4.797491411869433
+    },
+    "rel_vel_y": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 48600,
+      "min": -16.50694482332281,
+      "max": 16.163608970604038,
+      "mean": 0.07416641029541837,
+      "std": 4.0565725471023235
+    },
+    "rel_vel_z": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 48600,
+      "min": -16.403746673779025,
+      "max": 17.05491505888788,
+      "mean": -0.0270672334211091,
+      "std": 4.443735021027259
+    },
+    "sigma_r": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.02,
+      "max": 1194.3739230670503,
+      "mean": 61.980805137279376,
+      "std": 175.10377486977208
+    },
+    "sigma_t": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.03,
+      "max": 1433.2487076804605,
+      "mean": 75.27427851474202,
+      "std": 209.82230321952312
+    },
+    "sigma_n": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.0176053017471582,
+      "max": 955.4991384536404,
+      "mean": 49.53072157344999,
+      "std": 140.10151289002738
+    },
+    "obj_sigma_r": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.03,
+      "max": 1313.8113153737554,
+      "mean": 68.33658331008905,
+      "std": 192.56040244868083
+    },
+    "obj_sigma_t": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.045,
+      "max": 1552.6860999871656,
+      "mean": 82.05093100060563,
+      "std": 227.1436761445821
+    },
+    "obj_sigma_n": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.0250698070453929,
+      "max": 1074.9365307603452,
+      "mean": 55.82201183254786,
+      "std": 157.57994952707662
+    },
+    "solar_activity": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 36928,
+      "min": 0.100333533522483,
+      "max": 265.42656645929486,
+      "mean": 92.14959010231384,
+      "std": 82.23795892455352
+    },
+    "drag_level": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 37200,
+      "min": 0.0006730052553154,
+      "max": 7.983213204106555,
+      "mean": 1.5383981268664588,
+      "std": 1.7611237426510176
+    },
+    "max_thrust": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 11550,
+      "min": 0.0305033752110974,
+      "max": 24.97787669484389,
+      "mean": 4.211774835876844,
+      "std": 5.078815120783156
+    },
+    "eccentricity": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 14400,
+      "min": 2.5695236379226145e-08,
+      "max": 0.0498606880734523,
+      "mean": 0.00846659972208814,
+      "std": 0.011051751170981622
+    },
+    "inclination": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 14268,
+      "min": 0.0307821343039427,
+      "max": 99.9848116044888,
+      "mean": 62.4970546029902,
+      "std": 33.99029164719306
+    },
+    "semi_major_axis": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 14400,
+      "min": 6578.02094255966,
+      "max": 42398.67034091246,
+      "mean": 13508.963949610488,
+      "std": 12124.902329157845
+    },
+    "perigee": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 14400,
+      "min": 211.52255934313456,
+      "max": 36002.31322662519,
+      "mean": 7080.995692995207,
+      "std": 12078.327022760384
+    },
+    "apogee": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 14400,
+      "min": 256.7254026255495,
+      "max": 36204.31164375824,
+      "mean": 7276.677369049086,
+      "std": 12124.133940445008
+    },
+    "orbit_type": {
+      "dtype": "str",
+      "null_count": 0,
+      "unique_count": 3,
+      "min": "GEO",
+      "max": "MEO",
+      "mean": null,
+      "std": null
+    },
+    "relative_distance": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 60000,
+      "min": 0.5015482818966581,
+      "max": 213224.6102149656,
+      "mean": 19326.54920584923,
+      "std": 26137.490403698415
+    },
+    "relative_speed": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 48600,
+      "min": 0.0110659743610718,
+      "max": 17.61542554881089,
+      "mean": 6.434298250507781,
+      "std": 4.22282325180663
+    },
+    "relative_closing_rate": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 60000,
+      "min": -13.597465174319602,
+      "max": 14.947633685745751,
+      "mean": 1.3101195811958835,
+      "std": 4.106617111749125
+    },
+    "satellite_covariance_magnitude": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.0438748219369606,
+      "max": 2096.117728028637,
+      "mean": 109.52616159936282,
+      "std": 307.05099535987495
+    },
+    "object_covariance_magnitude": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.0658122329054409,
+      "max": 2300.526644631737,
+      "mean": 120.73045425067637,
+      "std": 336.81997573818677
+    },
+    "combined_covariance_magnitude": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.0790964600977818,
+      "max": 3112.255190760631,
+      "mean": 163.03510435916226,
+      "std": 455.7624239325922
+    },
+    "tracking_reliability_index": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59701,
+      "min": 0.0038467332801548,
+      "max": 1.0,
+      "mean": 0.79400050718208,
+      "std": 0.2264777442757621
+    },
+    "maneuver_capability_score": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 19118,
+      "min": 0.2805261180829059,
+      "max": 97.48777435226584,
+      "mean": 43.69350461735152,
+      "std": 30.95438093803826
+    },
+    "environmental_disturbance_index": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 37171,
+      "min": 0.0797222644416194,
+      "max": 0.9713004785623656,
+      "mean": 0.46363334448813004,
+      "std": 0.17369218530746927
+    },
+    "poc": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 25814,
+      "min": 0.0,
+      "max": 0.7960580357831776,
+      "mean": 0.04829525041157278,
+      "std": 0.11864698443996516
+    },
+    "risk_score": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 60000,
+      "min": 0.0027649865285817,
+      "max": 39.82596450012064,
+      "mean": 6.125668265044021,
+      "std": 9.46382316054154
+    },
+    "deltav_required": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59978,
+      "min": 1.3629966850212108e-08,
+      "max": 20.0,
+      "mean": 0.06725599296747801,
+      "std": 0.4208129696126048
+    },
+    "fuel_margin": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59740,
+      "min": -1.0,
+      "max": 0.9999994890888728,
+      "mean": 0.7719337715038108,
+      "std": 0.4238856625301414
+    },
+    "maneuver_window_remaining": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 53734,
+      "min": -0.0,
+      "max": 1431.0473071901704,
+      "mean": 395.60131654839574,
+      "std": 415.4424638307951
+    },
+    "feasibility_flag": {
+      "dtype": "int64",
+      "null_count": 0,
+      "unique_count": 2,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.9506333333333333,
+      "std": 0.2166342102760009
+    },
+    "cost_of_acting": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59973,
+      "min": 8.154258707138977e-06,
+      "max": 100.0,
+      "mean": 5.144569638131615,
+      "std": 9.550527832665988
+    },
+    "cost_of_waiting": {
+      "dtype": "float64",
+      "null_count": 0,
+      "unique_count": 59401,
+      "min": 0.0,
+      "max": 72.51040680797517,
+      "mean": 8.652068820741098,
+      "std": 13.059223023700604
+    },
+    "commit_decision": {
+      "dtype": "int64",
+      "null_count": 0,
+      "unique_count": 2,
+      "min": 0.0,
+      "max": 1.0,
+      "mean": 0.35873333333333335,
+      "std": 0.4796327376388513
+    }
+  },
+  "missing_values_total": 0,
+  "duplicate_rows": 0
+}

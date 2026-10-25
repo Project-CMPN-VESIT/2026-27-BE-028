@@ -1,0 +1,15 @@
+{
+  "dataset_path": "resources/capstone_final_merged_dataset.csv",
+  "total_rows": 60000,
+  "total_columns": 48,
+  "total_events": 3000,
+  "train_events": 2099,
+  "val_events": 451,
+  "test_events": 450,
+  "class_distribution": {
+    "0": 38476,
+    "1": 21524
+  },
+  "temporal_structure": "Uniform 20 timesteps per event, indexed normalized_step in [0..19]",
+  "leakage_check": "PASSED (0 event overlap across train/val/test)"
+}

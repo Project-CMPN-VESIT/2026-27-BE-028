@@ -95,7 +95,8 @@ def list_events():
 def get_event(event_id: int):
     """Retrieve detailed event telemetry and trend by event ID."""
     if event_id not in service.event_summaries:
-        raise HTTPException(status_code=404, detail=f"Event {event_id} not found in dataset")
+        if not service._ensure_event_loaded(event_id):
+            raise HTTPException(status_code=404, detail=f"Event {event_id} not found in dataset")
     return service.event_summaries[event_id]
 
 
@@ -108,7 +109,8 @@ def evaluate_event(event_id: int, current_step: int = Query(default=0), fuel_ava
     flags, auditable reasons, 20-step timeline, and maneuver options.
     """
     if event_id not in service.event_sequences_33:
-        raise HTTPException(status_code=404, detail=f"Event {event_id} not found in dataset")
+        if not service._ensure_event_loaded(event_id):
+            raise HTTPException(status_code=404, detail=f"Event {event_id} not found in dataset")
     return service.evaluate_event(event_id, current_step=current_step)
 
 
@@ -178,6 +180,9 @@ def get_sample(decision: Optional[str] = None, event_id: Optional[int] = None):
     if not events:
         raise HTTPException(status_code=500, detail="No event sequences available")
 
+    if event_id is not None:
+        if event_id not in service.event_sequences_33:
+            service._ensure_event_loaded(event_id)
     if event_id is not None and event_id in service.event_sequences_33:
         selected_eid = event_id
         target = service.event_summaries[event_id].get("dataset_decision", "WAIT")
@@ -212,6 +217,9 @@ def get_sample(decision: Optional[str] = None, event_id: Optional[int] = None):
 def predict(data: PredictInput):
     """Run multi-model prediction on provided sequence or event ID."""
     step = data.current_step or 0
+    if data.event_id is not None:
+        if data.event_id not in service.event_sequences_33:
+            service._ensure_event_loaded(data.event_id)
     if data.event_id is not None and data.event_id in service.event_sequences_33:
         eid = data.event_id
     else:
@@ -223,6 +231,22 @@ def predict(data: PredictInput):
     eval_data["raw_sequence"] = seq_arr
     eval_data["current_step"] = step
     return eval_data
+
+
+# -----------------------------------------------------------------------------
+# MERGED CAUSAL & XAI SUITE (from Capstone-Causal-XAI)
+# -----------------------------------------------------------------------------
+try:
+    from src.api.app import app as causal_xai_app
+    # Integrate all Causal-XAI endpoints (/api/overview, /api/causal/summary,
+    # /api/counterfactuals/{id}, /api/events/{id}/what-if, /api/xai/global,
+    # /api/xai/event/{id}, /api/physics/{id}, /api/events/{id}/analysis, etc.)
+    for r in causal_xai_app.router.routes:
+        if r.path not in ["/api/health", "/api/events"]:
+            app.router.routes.append(r)
+    logger.info("Successfully merged Causal-XAI research suite endpoints into unified backend.")
+except Exception as e:
+    logger.warning(f"Could not load Causal-XAI router: {e}")
 
 
 # -----------------------------------------------------------------------------

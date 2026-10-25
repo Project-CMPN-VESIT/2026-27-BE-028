@@ -60,7 +60,18 @@ function forecastFromDecision(decision, probCommit, baseFuel, baseDeltaV) {
 }
 
 function formatProbability(value) {
-  return Number(value).toExponential(2);
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return '0.0%';
+  return numeric.toExponential(2);
+}
+
+function formatProbDisplay(prob) {
+  const num = Number(prob);
+  if (!Number.isFinite(num) || num <= 0) return '0.0%';
+  const pct = num * 100;
+  if (pct < 0.01) return '< 0.01%';
+  if (pct < 1.0) return `${pct.toFixed(2)}%`;
+  return `${pct.toFixed(1)}%`;
 }
 
 function getReasoningText(finalDecision, isInfeasible, confidence) {
@@ -189,11 +200,13 @@ function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, n
       <div className={styles.matrixGrid}>
         {modelOrder.map((modelKey) => {
           const modelStep = activeStep?.models?.[modelKey] ?? {};
-          const rawPred = modelStep?.raw ?? 'WAIT';
-          const finalPred = modelStep?.final ?? decisionLabel(modelStep?.decision ?? 0);
-          const probCommit = Number(modelStep?.prob_commit ?? 0);
-          const isOverridden = Boolean(modelStep?.override);
-          const overrideReason = modelStep?.reason ?? '';
+          const modelEventFallback = result?.models?.[modelKey] || result?.models?.[modelKey.toUpperCase()] || {};
+          const rawPred = modelStep?.raw ?? modelEventFallback?.raw_prediction ?? 'WAIT';
+          const finalPred = modelStep?.final ?? modelEventFallback?.final_prediction ?? decisionLabel(modelStep?.decision ?? 0);
+          const probCommit = Number(modelStep?.prob_commit ?? modelEventFallback?.commit_probability ?? 0);
+          const probWait = Number(modelStep?.prob_wait ?? modelEventFallback?.wait_probability ?? (1 - probCommit));
+          const isOverridden = Boolean(modelStep?.override ?? modelEventFallback?.symbolic_correction);
+          const overrideReason = modelStep?.reason ?? modelEventFallback?.symbolic_reason ?? '';
           const forecast = forecastFromDecision(finalPred, probCommit, baseFuel, baseDeltaV);
 
           return (
@@ -217,7 +230,16 @@ function DecisionPanel({ result, sequence, currentStep, loading, scenarioInfo, n
 
               <div className={styles.metricRow}>
                 <span>P(Commit)</span>
-                <span className={styles.cyan}>{(probCommit * 100).toFixed(1)}%</span>
+                <span className={probCommit >= 0.5 ? styles.orange : styles.cyan}>
+                  {formatProbDisplay(probCommit)}
+                </span>
+              </div>
+
+              <div className={styles.metricRow}>
+                <span>P(Wait)</span>
+                <span className={probWait >= 0.5 ? styles.green : styles.cyan}>
+                  {formatProbDisplay(probWait)}
+                </span>
               </div>
 
               <div className={styles.metricRow}>

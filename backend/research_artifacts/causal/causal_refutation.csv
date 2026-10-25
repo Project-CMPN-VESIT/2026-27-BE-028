@@ -1,0 +1,3 @@
+refuter,placebo_ate,p_value,status,rcc_ate,ate_difference
+Placebo Treatment,-0.0007148555434537291,0.5283945336567992,PASSED,,
+Random Common Cause,,,PASSED,-0.014995628761605437,1.6650950006285442e-06
