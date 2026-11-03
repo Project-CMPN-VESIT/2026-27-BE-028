@@ -350,15 +350,24 @@ def counterfactuals(event_id: int) -> dict:
             for cf in cf_list:
                 result.append({
                     "event_id": event_id,
+                    "target_step_index": int(cf.get("target_step_index", target_idx)),
                     "analysis_type": "COUNTERFACTUAL_SENSITIVITY_ANALYSIS",
-                    "scenario_category": "TIMING_SENSITIVITY" if "Timing" in cf["intervention_type"] else "DELTA_V_SENSITIVITY",
+                    "scenario_category": "TIMING_SENSITIVITY" if "Lead-Time" in cf["intervention_type"] else "DELTA_V_SENSITIVITY",
                     "scenario_type": cf.get("scenario_type", "OPERATIONAL_INTERVENTION"),
                     "intervention_type": cf["intervention_type"],
                     "factual_poc": float(cf["factual"]["poc"]),
                     "counterfactual_poc": float(cf["counterfactual"]["poc"]),
                     "delta_poc": float(cf["deltas"]["delta_poc"]),
+                    "factual_fuel_margin": float(cf["factual"]["fuel_margin"]),
+                    "counterfactual_fuel_margin": float(cf["counterfactual"]["fuel_margin"]),
+                    "delta_fuel_margin": float(cf["deltas"]["delta_fuel_margin"]),
+                    "factual_deltav": float(cf["factual"]["deltav_required"]),
+                    "counterfactual_deltav": float(cf["counterfactual"]["deltav_required"]),
+                    "delta_t_adv": cf.get("delta_t_adv"),
+                    "scale_factor": cf.get("scale_factor"),
                     "is_physically_admissible": cf["physics_validation"]["is_physically_admissible"],
                     "operational_status": cf.get("operational_status", "ACTIONABLE"),
+                    "poc_mode": cf.get("poc_mode"),
                     "physics_reason": cf["physics_validation"]["reason"],
                 })
         except Exception:

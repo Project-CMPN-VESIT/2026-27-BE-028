@@ -1,0 +1,24 @@
+ffconcat version 1.0
+file 01_dashboard.png
+duration 13
+file 02_dashboard_events.png
+duration 12
+file 03_simulation_initial.png
+duration 15
+file 04_simulation_wait.png
+duration 18
+file 05_simulation_commit.png
+duration 17
+file 06_whatif_overview.png
+duration 15
+file 07_whatif_result.png
+duration 20
+file 08_xai_shap.png
+duration 15
+file 09_xai_explanation.png
+duration 15
+file 10_analytics_models.png
+duration 10
+file 11_analytics_shield.png
+duration 10
+file 11_analytics_shield.png

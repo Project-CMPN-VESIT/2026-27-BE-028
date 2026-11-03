@@ -28,14 +28,24 @@ export interface CausalSummaryData {
 }
 
 export interface WhatIfScenarioItem {
+  target_step_index?: number;
   scenario_type?: string;
   scenario_category?: string;
   intervention_type: string;
   factual_poc: number;
   counterfactual_poc: number;
   delta_poc: number;
+  factual_fuel_margin?: number;
+  counterfactual_fuel_margin?: number;
+  delta_fuel_margin?: number;
+  factual_deltav?: number;
+  counterfactual_deltav?: number;
+  delta_t_adv?: number | null;
+  scale_factor?: number | null;
   is_physically_admissible: boolean;
   operational_status?: string;
+  poc_mode?: string;
+  physics_reason?: string;
 }
 
 export interface WhatIfModelResponse {
@@ -51,8 +61,8 @@ export interface CounterfactualData {
   available: boolean;
   analysis_type: string;
   disclaimer: string;
-  scenarios: WhatIfScenarioItem[];
-  model_responses: WhatIfModelResponse[];
+  scenarios: WhatIfScenarioItem[] | null;
+  model_responses: WhatIfModelResponse[] | null;
   model_response_available: boolean;
 }
 
