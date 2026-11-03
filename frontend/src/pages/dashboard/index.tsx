@@ -110,6 +110,21 @@ export default function DashboardPage() {
         {/* MISSION SUMMARY CARDS */}
         <MissionSummary events={events} selectedEvent={selectedEvent} />
 
+        <GlassPanel className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <div className="text-[11px] uppercase tracking-[0.34em] text-cyan-200/55">Interactive Mission</div>
+            <h2 className="mt-2 font-[Orbitron] text-xl tracking-[0.08em] text-white">OrbitalX — The Final Decision</h2>
+            <p className="mt-1 text-sm text-white/55">Play through a 20-step dataset encounter and compare your choices with the backend safety and model outputs.</p>
+          </div>
+          <Link
+            to="/orbitalx"
+            className="inline-flex shrink-0 items-center justify-center rounded-xl border border-cyan-300/40 bg-cyan-400/10 px-5 py-3 text-sm font-semibold uppercase tracking-[0.18em] text-cyan-100 hover:border-cyan-200/70 hover:bg-cyan-400/20"
+          >
+            Enter Mission
+            <ChevronRight className="ml-2 h-4 w-4" aria-hidden="true" />
+          </Link>
+        </GlassPanel>
+
         {/* ACTIVE QUEUE & 3D GLOBE */}
         <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
           <GlassPanel className="p-6">

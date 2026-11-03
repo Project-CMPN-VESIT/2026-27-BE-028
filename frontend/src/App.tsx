@@ -10,6 +10,7 @@ const CausalPage = lazy(() => import('./pages/causal/index'));
 const WhatIfPage = lazy(() => import('./pages/what-if/index'));
 const XaiPage = lazy(() => import('./pages/xai/index'));
 const AnalyticsPage = lazy(() => import('./pages/analytics/index'));
+const OrbitalXPage = lazy(() => import('./pages/orbitalx/index'));
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -40,6 +41,7 @@ function AnimatedRoutes() {
             <Route path="/what-if" element={<WhatIfPage />} />
             <Route path="/xai" element={<XaiPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/orbitalx" element={<OrbitalXPage />} />
             {/* Backward-compatible redirects */}
             <Route path="/critical" element={<Navigate to="/simulation" replace />} />
             <Route path="/validation" element={<Navigate to="/analytics" replace />} />

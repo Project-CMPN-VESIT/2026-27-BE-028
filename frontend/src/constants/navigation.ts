@@ -8,4 +8,5 @@ export const NAV_ITEMS = [
   { label: 'What-If Analysis', path: '/what-if' },
   { label: 'Explainable AI', path: '/xai' },
   { label: 'Analytics & Safety', path: '/analytics' },
+  { label: 'The Final Decision', path: '/orbitalx' },
 ] as const;
