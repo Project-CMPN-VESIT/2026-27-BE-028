@@ -653,7 +653,12 @@ def generate_explanation(context: dict[str, Any]) -> dict[str, Any]:
 
     try:
         from dotenv import load_dotenv
+        from pathlib import Path
         load_dotenv()
+        for p in [Path.cwd(), Path(__file__).resolve().parents[2], Path(__file__).resolve().parents[3]]:
+            env_file = p / ".env"
+            if env_file.exists():
+                load_dotenv(env_file)
     except Exception:
         pass
 

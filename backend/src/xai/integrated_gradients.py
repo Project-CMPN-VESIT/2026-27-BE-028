@@ -72,20 +72,43 @@ class NeuralXAIExplainer:
                 baseline = torch.zeros_like(x_in).to(self.device)
 
         wrapper = self._create_wrapper(target_timestep, target_class)
-        ig = IntegratedGradients(wrapper)
+        if IntegratedGradients is not None:
+            try:
+                ig = IntegratedGradients(wrapper)
+                # Compute attributions and delta
+                attributions, delta = ig.attribute(
+                    x_in,
+                    baselines=baseline,
+                    target=None,
+                    return_convergence_delta=True,
+                    n_steps=self.n_steps,
+                    method="gausslegendre"
+                )
+                attr_np = attributions.squeeze(0).detach().cpu().numpy()
+                delta_val = float(delta.squeeze().item()) if hasattr(delta, "item") else float(delta[0])
+            except Exception:
+                ig = None
+        else:
+            ig = None
 
-        # Compute attributions and delta
-        attributions, delta = ig.attribute(
-            x_in,
-            baselines=baseline,
-            target=None,
-            return_convergence_delta=True,
-            n_steps=self.n_steps,
-            method="gausslegendre"
-        )
-
-        attr_np = attributions.squeeze(0).detach().cpu().numpy() # (20, num_features)
-        delta_val = float(delta.squeeze().item()) if hasattr(delta, "item") else float(delta[0])
+        if ig is None:
+            # Fallback native PyTorch Riemann sum Integrated Gradients
+            steps = min(self.n_steps, 50)
+            alphas = torch.linspace(0.0, 1.0, steps, device=self.device)
+            delta_x = x_in - baseline
+            grads = []
+            for alpha in alphas:
+                x_step = (baseline + alpha * delta_x).clone().detach().requires_grad_(True)
+                out = wrapper(x_step)
+                grad = torch.autograd.grad(out, x_step)[0]
+                grads.append(grad)
+            avg_grads = torch.stack(grads, dim=0).mean(dim=0)
+            attributions = delta_x * avg_grads
+            attr_np = attributions.squeeze(0).detach().cpu().numpy()
+            with torch.no_grad():
+                fx = float(wrapper(x_in).item())
+                f0 = float(wrapper(baseline).item())
+            delta_val = float(np.sum(attr_np) - (fx - f0))
 
         # Overall feature importance (sum across timesteps if sequence)
         if attr_np.ndim == 2:

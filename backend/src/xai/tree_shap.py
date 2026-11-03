@@ -15,14 +15,34 @@ class TreeSHAPExplainer:
         self.adapter = xgboost_adapter
         self.model = xgboost_adapter.model
         self.feature_names = xgboost_adapter.get_feature_names()
-        self.explainer = shap.TreeExplainer(self.model)
+        if shap is not None:
+            try:
+                self.explainer = shap.TreeExplainer(self.model)
+            except Exception:
+                self.explainer = None
+        else:
+            self.explainer = None
 
     def explain_local(self, x_data: Any) -> Dict[str, Any]:
         """
         Computes local SHAP attributions for given input row(s).
         """
         df_proc = self.adapter.preprocess(x_data)
-        shap_values = self.explainer.shap_values(df_proc)
+        if self.explainer is not None:
+            shap_values = self.explainer.shap_values(df_proc)
+            base_val = float(self.explainer.expected_value[1] if isinstance(self.explainer.expected_value, (list, np.ndarray)) else self.explainer.expected_value)
+        else:
+            # Fallback to XGBoost native pred_contribs
+            try:
+                import xgboost as xgb
+                dmatrix = xgb.DMatrix(df_proc)
+                contribs = self.model.predict(dmatrix, pred_contribs=True)
+                # Last column is bias (base value)
+                shap_values = contribs[:, :-1]
+                base_val = float(contribs[0, -1])
+            except Exception:
+                shap_values = np.zeros((len(df_proc), len(self.feature_names)))
+                base_val = 0.5
         
         # In XGBoost binary classifier, shap_values is (N, num_features)
         if isinstance(shap_values, list): # multiclass format
@@ -41,7 +61,7 @@ class TreeSHAPExplainer:
             "mean_abs_shap": mean_abs_shap,
             "ranked_features": ranked_features,
             "ranked_indices": ranked_idx.tolist(),
-            "base_value": float(self.explainer.expected_value[1] if isinstance(self.explainer.expected_value, (list, np.ndarray)) else self.explainer.expected_value)
+            "base_value": base_val
         }
 
     def explain_global(self, df_sample: pd.DataFrame) -> pd.DataFrame:
