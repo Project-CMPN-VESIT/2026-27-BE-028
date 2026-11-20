@@ -14,20 +14,22 @@ export async function fetchMissionEvents(): Promise<MissionEvent[]> {
       }
 
       const payload = await response.json();
-      if (!Array.isArray(payload) || payload.length === 0) {
+      const list = Array.isArray(payload) ? payload : (Array.isArray(payload?.items) ? payload.items : []);
+      if (list.length === 0) {
         throw new Error('Invalid events payload');
       }
 
-      return payload.map(normalizeEvent);
+      return list.map(normalizeEvent);
     },
     async () => mockMissionEvents,
   );
 }
 
 export async function fetchMissionEvent(eventId: string): Promise<MissionEvent> {
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
   return requestJsonWithFallback(
     async () => {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/events/${eventId}`);
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000/api'}/events/${cleanId}`);
       if (!response.ok) {
         throw new Error('Event endpoint unavailable');
       }

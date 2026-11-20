@@ -66,6 +66,28 @@ export interface CounterfactualData {
   model_response_available: boolean;
 }
 
+export interface StructuredSection {
+  id: string;
+  title: string;
+  badge: string;
+  tone: 'critical' | 'warning' | 'success' | 'info' | 'purple' | 'amber' | 'emerald' | 'rose' | string;
+  bullets: string[];
+  text: string;
+}
+
+export interface StructuredExplanation {
+  status: 'success' | 'fallback';
+  provider: 'gemini' | 'deterministic' | string;
+  model?: string;
+  headline?: string;
+  sections?: StructuredSection[];
+  explanation: string;
+  message?: string;
+  disclaimer?: string;
+  reason?: string;
+  verified_context?: any;
+}
+
 export interface WhatIfResult {
   analysis_type: string;
   disclaimer: string;
@@ -84,10 +106,7 @@ export interface WhatIfResult {
     current_operational_status?: string;
     what_if_operational_status?: string;
   };
-  deterministic_explanation?: {
-    explanation: string;
-    disclaimer?: string;
-  };
+  deterministic_explanation?: StructuredExplanation;
 }
 
 export interface XaiGlobalItem {
@@ -123,14 +142,16 @@ export async function fetchCausalSummary(): Promise<CausalSummaryData> {
 }
 
 export async function fetchWhatIfScenarios(eventId: string | number): Promise<CounterfactualData> {
-  return requestJson<CounterfactualData>(`/counterfactuals/${eventId}`);
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+  return requestJson<CounterfactualData>(`/counterfactuals/${cleanId}`);
 }
 
 export async function runInteractiveWhatIf(
   eventId: string | number,
   body: { intervention: 'timing' | 'delta_v'; delta_t_adv?: number; scale_factor?: number }
 ): Promise<WhatIfResult> {
-  return requestJson<WhatIfResult>(`/events/${eventId}/what-if`, {
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+  return requestJson<WhatIfResult>(`/events/${cleanId}/what-if`, {
     method: 'POST',
     body: JSON.stringify(body),
   });
@@ -141,21 +162,25 @@ export async function fetchGlobalXai(): Promise<{ available: boolean; data: XaiG
 }
 
 export async function fetchEventXai(eventId: string | number): Promise<{ available: boolean; data: XaiEventItem[] | null }> {
-  return requestJson<{ available: boolean; data: XaiEventItem[] | null }>(`/xai/event/${eventId}`);
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+  return requestJson<{ available: boolean; data: XaiEventItem[] | null }>(`/xai/event/${cleanId}`);
 }
 
-export async function requestXaiExplanation(eventId: string | number): Promise<any> {
-  return requestJson<any>(`/events/${eventId}/xai-explanation`, {
+export async function requestXaiExplanation(eventId: string | number): Promise<StructuredExplanation> {
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+  return requestJson<StructuredExplanation>(`/events/${cleanId}/xai-explanation`, {
     method: 'POST',
   });
 }
 
 export async function fetchPhysicsChecks(eventId: string | number): Promise<PhysicsData> {
-  return requestJson<PhysicsData>(`/physics/${eventId}`);
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+  return requestJson<PhysicsData>(`/physics/${cleanId}`);
 }
 
 export async function fetchEventAnalysis(eventId: string | number): Promise<any> {
-  return requestJson<any>(`/events/${eventId}/analysis`);
+  const cleanId = String(eventId).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+  return requestJson<any>(`/events/${cleanId}/analysis`);
 }
 
 export async function fetchResearchOverview(): Promise<any> {

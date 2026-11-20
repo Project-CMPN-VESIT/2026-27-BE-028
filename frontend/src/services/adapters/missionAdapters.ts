@@ -25,26 +25,31 @@ export const normalizeEvent = (value: unknown): MissionEvent => {
     return getMockEventById('EVT-2080');
   }
 
-  const candidate = value as Record<string, unknown>;
-  const eventId = String(candidate.event_id ?? candidate.id ?? 'EVT-2080');
-  const fallback = getMockEventById(eventId);
-  const probability = toNumber(candidate.probability_of_collision ?? candidate.collision_probability ?? fallback.probabilityOfCollision);
-  const closestApproachKm = toNumber(candidate.closest_approach_km ?? candidate.miss_distance ?? fallback.closestApproachKm);
-  const timeToTcaMinutes = toNumber(candidate.time_to_tca_minutes ?? candidate.tca_minutes ?? fallback.timeToTcaMinutes);
+  const rawCandidate = value as Record<string, unknown>;
+  const candidate = (rawCandidate.latest && typeof rawCandidate.latest === 'object'
+    ? { ...rawCandidate.latest, ...rawCandidate }
+    : rawCandidate) as Record<string, unknown>;
+  const rawId = String(candidate.event_id ?? candidate.id ?? '2080');
+  const cleanId = rawId.replace(/^EVT-/i, '').replace(/^#/i, '').trim() || '2080';
+  const mockId = rawId.startsWith('EVT-') ? rawId : `EVT-${cleanId}`;
+  const fallback = getMockEventById(mockId);
+  const probability = toNumber(candidate.probability_of_collision ?? candidate.collision_probability ?? candidate.poc ?? fallback.probabilityOfCollision);
+  const closestApproachKm = toNumber(candidate.closest_approach_km ?? candidate.miss_distance ?? candidate.relative_distance ?? fallback.closestApproachKm);
+  const timeToTcaMinutes = toNumber(candidate.time_to_tca_minutes ?? candidate.tca_minutes ?? (candidate.time_to_TCA ? Number(candidate.time_to_TCA) * 60 : undefined) ?? fallback.timeToTcaMinutes);
 
   return {
     ...fallback,
-    id: eventId,
-    eventId,
-    name: String(candidate.name ?? candidate.title ?? fallback.name),
+    id: cleanId,
+    eventId: cleanId,
+    name: String(candidate.name ?? candidate.title ?? `Conjunction #${cleanId}`),
     satelliteName: String(candidate.satellite_name ?? candidate.primary_object ?? fallback.satelliteName),
     debrisName: String(candidate.debris_name ?? candidate.secondary_object ?? fallback.debrisName),
     riskLevel: riskFromProbability(probability),
     probabilityOfCollision: probability,
     timeToTcaMinutes,
     closestApproachKm,
-    relativeVelocityKmS: toNumber(candidate.relative_velocity_km_s ?? candidate.relative_velocity ?? fallback.relativeVelocityKmS),
-    deltaVKmS: toNumber(candidate.delta_v_km_s ?? candidate.delta_v_required ?? fallback.deltaVKmS),
+    relativeVelocityKmS: toNumber(candidate.relative_velocity_km_s ?? candidate.relative_velocity ?? candidate.relative_speed ?? fallback.relativeVelocityKmS),
+    deltaVKmS: toNumber(candidate.delta_v_km_s ?? candidate.delta_v_required ?? candidate.deltav_required ?? fallback.deltaVKmS),
     fuelRemainingPct: clamp(toNumber(candidate.fuel_remaining_pct ?? candidate.fuel_remaining ?? fallback.fuelRemainingPct), 0, 100),
     status: String(candidate.status ?? fallback.status),
     location: String(candidate.location ?? fallback.location),

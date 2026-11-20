@@ -95,19 +95,38 @@ def artifact_response(relative_path: str, data: Any) -> dict:
     }
 
 
-def latest_event_row(event_id: int) -> pd.Series:
+def parse_event_id(event_id: Any) -> int:
+    try:
+        clean = str(event_id).strip().upper()
+        if clean.startswith("EVT-"):
+            clean = clean[4:]
+        elif clean.startswith("EVT"):
+            clean = clean[3:]
+        elif clean.startswith("#"):
+            clean = clean[1:]
+        return int(clean)
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid event ID '{event_id}'. Expected an integer or format like 'EVT-2080' or '#2080'."
+        )
+
+
+def latest_event_row(event_id: Any) -> pd.Series:
+    numeric_id = parse_event_id(event_id)
     dataset = get_dataset()
-    event = dataset[dataset["event_id"] == event_id].sort_values("normalized_step")
+    event = dataset[dataset["event_id"] == numeric_id].sort_values("normalized_step")
     if event.empty:
-        raise HTTPException(status_code=404, detail=f"Event {event_id} not found")
+        raise HTTPException(status_code=404, detail=f"Event {numeric_id} not found in dataset")
     return event.iloc[-1]
 
 
-def event_frame(event_id: int) -> pd.DataFrame:
+def event_frame(event_id: Any) -> pd.DataFrame:
+    numeric_id = parse_event_id(event_id)
     dataset = get_dataset()
-    event = dataset[dataset["event_id"] == event_id].sort_values("normalized_step")
+    event = dataset[dataset["event_id"] == numeric_id].sort_values("normalized_step")
     if event.empty:
-        raise HTTPException(status_code=404, detail=f"Event {event_id} not found")
+        raise HTTPException(status_code=404, detail=f"Event {numeric_id} not found in dataset")
     return event
 
 
@@ -198,8 +217,9 @@ def events(
 
 
 @app.get("/api/events/{event_id}")
-def event(event_id: int) -> dict:
-    frame = event_frame(event_id)
+def event(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
+    frame = event_frame(numeric_id)
     generator = get_counterfactual_generator()
     act_step = generator.find_actionable_decision_step(frame)
     target_idx = act_step if act_step is not None else (len(frame) - 1)
@@ -211,7 +231,7 @@ def event(event_id: int) -> dict:
     latest_row["observed_poc_at_epoch"] = float(latest_row.get("poc", 0.0))
     latest_row["terminal_poc_at_tca"] = event_poc
     return {
-        "event_id": event_id,
+        "event_id": numeric_id,
         "timesteps": int(len(frame)),
         "decision_epoch_step": int(target_idx),
         "latest": _json_value(target_row),
@@ -225,8 +245,9 @@ def event(event_id: int) -> dict:
 
 
 @app.get("/api/events/{event_id}/analysis")
-def event_analysis(event_id: int) -> dict:
-    report = get_analyzer().analyze_event(event_frame(event_id))
+def event_analysis(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
+    report = get_analyzer().analyze_event(event_frame(numeric_id))
     return _json_value(report)
 
 
@@ -237,14 +258,15 @@ def model_metrics() -> dict:
 
 
 @app.get("/api/models/predictions/{event_id}")
-def model_predictions(event_id: int) -> dict:
+def model_predictions(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
     frame = read_csv("model_predictions.csv")
     if frame is not None:
-        rows = frame[frame["event_id"] == event_id]
+        rows = frame[frame["event_id"] == numeric_id]
         if not rows.empty:
             return artifact_response("model_predictions.csv", rows.to_dict(orient="records"))
     try:
-        e_df = event_frame(event_id)
+        e_df = event_frame(numeric_id)
         records = []
         for name, adapter in get_adapters().items():
             probs = adapter.predict_proba(e_df)
@@ -258,7 +280,7 @@ def model_predictions(event_id: int) -> dict:
                 else:
                     pw, pc, pr = float(probs[0, idx, 0]), float(probs[0, idx, 1]), int(preds[0, idx])
                 records.append({
-                    "event_id": event_id,
+                    "event_id": numeric_id,
                     "normalized_step": norm_step,
                     "model": name.upper(),
                     "prob_wait": pw,
@@ -277,21 +299,22 @@ def xai_global() -> dict:
 
 
 @app.get("/api/xai/event/{event_id}")
-def xai_event(event_id: int) -> dict:
+def xai_event(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
     frame = read_csv("xai/xai_local.csv")
     if frame is not None:
-        rows = frame[frame["event_id"] == event_id]
+        rows = frame[frame["event_id"] == numeric_id]
         if not rows.empty:
             return artifact_response("xai/xai_local.csv", rows.to_dict(orient="records"))
     try:
-        report = get_analyzer().analyze_event(event_frame(event_id))
+        report = get_analyzer().analyze_event(event_frame(numeric_id))
         drivers = report.get("WHY", {}).get("key_drivers", [])
         records = []
         for d in drivers:
             feat = d.get("feature", "")
             val = float(d.get("attribution", 0.0))
             records.append({
-                "event_id": event_id,
+                "event_id": numeric_id,
                 "model": "CONSENSUS_XAI",
                 "feature": feat,
                 "attribution": val,
@@ -322,18 +345,19 @@ def causal_summary() -> dict:
 
 
 @app.get("/api/counterfactuals/{event_id}")
-def counterfactuals(event_id: int) -> dict:
+def counterfactuals(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
     frame = read_csv("counterfactual/counterfactual_results.csv")
     responses = read_csv("validation/counterfactual_model_responses.csv")
-    result = frame[frame["event_id"] == event_id].to_dict(orient="records") if frame is not None else None
-    model_result = responses[responses["event_id"] == event_id].to_dict(orient="records") if responses is not None else None
+    result = frame[frame["event_id"] == numeric_id].to_dict(orient="records") if frame is not None else None
+    model_result = responses[responses["event_id"] == numeric_id].to_dict(orient="records") if responses is not None else None
 
     needs_dynamic = False
     if not result:
         needs_dynamic = True
     elif len(result) > 0 and float(result[0].get("factual_poc", 0.0)) == 0.0:
         try:
-            e_df = event_frame(event_id)
+            e_df = event_frame(numeric_id)
             if float(e_df["poc"].max()) > 0.0:
                 needs_dynamic = True
         except Exception:
@@ -341,7 +365,7 @@ def counterfactuals(event_id: int) -> dict:
 
     if needs_dynamic:
         try:
-            e_df = event_frame(event_id)
+            e_df = event_frame(numeric_id)
             generator = get_counterfactual_generator()
             act_idx = generator.find_actionable_decision_step(e_df)
             target_idx = act_idx if act_idx is not None else (len(e_df) - 1)
@@ -349,7 +373,7 @@ def counterfactuals(event_id: int) -> dict:
             result = []
             for cf in cf_list:
                 result.append({
-                    "event_id": event_id,
+                    "event_id": numeric_id,
                     "target_step_index": int(cf.get("target_step_index", target_idx)),
                     "analysis_type": "COUNTERFACTUAL_SENSITIVITY_ANALYSIS",
                     "scenario_category": "TIMING_SENSITIVITY" if "Lead-Time" in cf["intervention_type"] else "DELTA_V_SENSITIVITY",
@@ -383,7 +407,7 @@ def counterfactuals(event_id: int) -> dict:
 
 
 @app.post("/api/events/{event_id}/what-if")
-def interactive_what_if(event_id: int, request: WhatIfRequest) -> dict:
+def interactive_what_if(event_id: str, request: WhatIfRequest) -> dict:
     frame = event_frame(event_id)
     generator = get_counterfactual_generator()
     act_step = generator.find_actionable_decision_step(frame)
@@ -392,19 +416,30 @@ def interactive_what_if(event_id: int, request: WhatIfRequest) -> dict:
     target_dict = target_row.to_dict()
     event_poc = float(frame["poc"].max()) if "poc" in frame.columns else 0.0
 
+    numeric_id = parse_event_id(event_id)
     if request.intervention == "timing":
-        if request.delta_t_adv not in {10.0, 30.0, 60.0}:
-            raise HTTPException(status_code=422, detail="Supported timing advances are 10, 30, or 60.")
+        raw_val = float(request.delta_t_adv if request.delta_t_adv is not None else 30.0)
+        allowed = {10.0, 30.0, 60.0}
+        closest = min(allowed, key=lambda x: abs(x - raw_val))
+        if abs(closest - raw_val) <= 1.0:
+            val = closest
+        else:
+            raise HTTPException(status_code=422, detail=f"Supported timing advances are 10, 30, or 60 hours. Received: {request.delta_t_adv}")
         result = generator.scm.propagate_maneuver_timing_intervention(
             target_dict,
-            delta_t_adv=request.delta_t_adv,
+            delta_t_adv=val,
         )
     else:
-        if request.scale_factor is None or request.scale_factor not in {0.8, 1.2, 1.5}:
-            raise HTTPException(status_code=422, detail="Supported delta-V scale factors are 0.8, 1.2, or 1.5.")
+        raw_val = float(request.scale_factor if request.scale_factor is not None else 1.2)
+        allowed = {0.8, 1.2, 1.5}
+        closest = min(allowed, key=lambda x: abs(x - raw_val))
+        if abs(closest - raw_val) <= 0.05:
+            val = closest
+        else:
+            raise HTTPException(status_code=422, detail=f"Supported delta-V scale factors are 0.8, 1.2, or 1.5. Received: {request.scale_factor}")
         result = generator.scm.propagate_deltav_scaling_intervention(
             target_dict,
-            scale_factor=request.scale_factor,
+            scale_factor=val,
         )
 
     cf_frame = frame.copy(deep=True)
@@ -426,7 +461,7 @@ def interactive_what_if(event_id: int, request: WhatIfRequest) -> dict:
     what_if_decision = counterfactual_analysis["DECISION"]["final_decision"]
     explanation_context = {
         "event": {
-            "event_id": event_id,
+            "event_id": numeric_id,
             "target_step": int(target_idx),
             "time_to_TCA": float(target_dict["time_to_TCA"]),
             "poc": float(result["factual"]["poc"]),
@@ -450,7 +485,7 @@ def interactive_what_if(event_id: int, request: WhatIfRequest) -> dict:
     return _json_value({
         "analysis_type": "Interactive What-If Sensitivity Simulator",
         "disclaimer": "These what-if scenarios modify supported state/intervention variables to study sensitivity. They are not physically propagated ACT/WAIT maneuver simulations.",
-        "event_id": event_id,
+        "event_id": numeric_id,
         "target_step_index": int(target_idx),
         "is_pre_tca_actionable": act_step is not None,
         "intervention": request.model_dump(exclude_none=True),
@@ -486,15 +521,16 @@ def interactive_what_if(event_id: int, request: WhatIfRequest) -> dict:
 
 
 @app.post("/api/events/{event_id}/xai-explanation")
-def xai_explanation(event_id: int) -> dict:
-    frame = event_frame(event_id)
+def xai_explanation(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
+    frame = event_frame(numeric_id)
     current_analysis = get_analyzer().analyze_event(frame)
     act_step = current_analysis["DECISION"]["decision_epoch_step"]
     row = frame.iloc[act_step]
     prediction_artifact = read_csv("model_predictions.csv")
     xai_artifact = read_csv("xai/xai_local.csv")
-    event_predictions = prediction_artifact[prediction_artifact["event_id"] == event_id] if prediction_artifact is not None else None
-    event_xai = xai_artifact[xai_artifact["event_id"] == event_id] if xai_artifact is not None else None
+    event_predictions = prediction_artifact[prediction_artifact["event_id"] == numeric_id] if prediction_artifact is not None else None
+    event_xai = xai_artifact[xai_artifact["event_id"] == numeric_id] if xai_artifact is not None else None
     final_predictions = []
     if event_predictions is not None and not event_predictions.empty:
         final_predictions = (
@@ -504,7 +540,7 @@ def xai_explanation(event_id: int) -> dict:
             .to_dict(orient="records")
         )
     else:
-        preds_resp = model_predictions(event_id)
+        preds_resp = model_predictions(str(numeric_id))
         if preds_resp.get("data"):
             df_p = pd.DataFrame(preds_resp["data"])
             final_predictions = (
@@ -524,7 +560,7 @@ def xai_explanation(event_id: int) -> dict:
             .to_dict(orient="records")
         )
     else:
-        xai_resp = xai_event(event_id)
+        xai_resp = xai_event(str(numeric_id))
         if xai_resp.get("data"):
             df_x = pd.DataFrame(xai_resp["data"])
             top_features = (
@@ -541,7 +577,7 @@ def xai_explanation(event_id: int) -> dict:
     }
     causal_frame = read_csv("causal/causal_effects.csv")
     context = {
-        "event_id": event_id,
+        "event_id": numeric_id,
         "verified_event_values": {
             "time_to_TCA": float(row["time_to_TCA"]),
             "poc": float(row["poc"]),
@@ -574,8 +610,9 @@ def xai_explanation(event_id: int) -> dict:
 
 
 @app.get("/api/physics/{event_id}")
-def physics(event_id: int) -> dict:
-    frame = event_frame(event_id)
+def physics(event_id: str) -> dict:
+    numeric_id = parse_event_id(event_id)
+    frame = event_frame(numeric_id)
     report = get_analyzer().analyze_event(frame)
     act_step = report["DECISION"]["decision_epoch_step"]
     row = frame.iloc[act_step]
@@ -585,7 +622,7 @@ def physics(event_id: int) -> dict:
     maneuver_window = float(row["maneuver_window_remaining"])
     fuel_margin = float(row["fuel_margin"])
     return {
-        "event_id": event_id,
+        "event_id": numeric_id,
         "decision_epoch_step": int(act_step),
         "operational_status": report["DECISION"]["operational_status"],
         "operational_reason": report["DECISION"]["operational_reason"],

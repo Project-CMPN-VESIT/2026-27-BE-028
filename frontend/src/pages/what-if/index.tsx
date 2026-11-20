@@ -10,6 +10,7 @@ import {
 } from '../../services/api/causalXai';
 import { useMissionStore } from '../../store/missionStore';
 import { formatMinutes, formatPercent } from '../../utils/format';
+import { StructuredExplanationCard } from '../../components/ui/StructuredExplanationCard';
 
 function formatNumber(value: any, digits = 3) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return 'Unavailable';
@@ -46,8 +47,9 @@ export default function WhatIfPage() {
 
   useEffect(() => {
     if (selectedEvent?.id) {
-      setActiveEventId(selectedEvent.id);
-      setEventInput(selectedEvent.id);
+      const clean = String(selectedEvent.id).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+      setActiveEventId(clean);
+      setEventInput(clean);
     }
   }, [selectedEvent?.id]);
 
@@ -68,8 +70,8 @@ export default function WhatIfPage() {
   }, [activeEventId]);
 
   const handleSelectEvent = (id: string | number) => {
-    const raw = String(id).trim();
-    const num = Math.max(1, Math.min(3000, parseInt(raw, 10) || 1));
+    const raw = String(id).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+    const num = Math.max(1, Math.min(6150, parseInt(raw, 10) || 1));
     const strId = String(num);
     setActiveEventId(strId);
     setEventInput(strId);
@@ -155,7 +157,7 @@ export default function WhatIfPage() {
                 <input
                   type="number"
                   min="1"
-                  max="3000"
+                  max="6150"
                   value={eventInput}
                   onChange={(e) => setEventInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSelectEvent(eventInput)}
@@ -184,6 +186,17 @@ export default function WhatIfPage() {
                 }`}
               >
                 #1 (Active Wait)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectEvent(2080)}
+                className={`rounded-full px-3 py-1 transition ${
+                  activeEventId === '2080'
+                    ? 'border border-cyan-400/50 bg-cyan-400/20 text-cyan-200'
+                    : 'border border-white/10 bg-white/5 text-white/60 hover:text-white'
+                }`}
+              >
+                #2080 (Operational)
               </button>
               <button
                 type="button"
@@ -238,14 +251,14 @@ export default function WhatIfPage() {
           <div className="flex items-center gap-3">
             <Workflow className="h-5 w-5 text-cyan-300" />
             <div>
-              <div className="text-[11px] uppercase tracking-[0.34em] text-cyan-200/55">Interactive Simulation</div>
+              <div className="text-[11px] uppercase tracking-[0.34em] text-cyan-200/55">Live SCM Interventions</div>
               <h3 className="font-[Orbitron] text-xl tracking-[0.08em] text-white">
-                Intervention Generator — Event #{activeEventId}
+                Interactive Sensitivity Simulator
               </h3>
             </div>
           </div>
 
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="block text-xs uppercase tracking-wider text-white/50">Intervention Mode</label>
               <select
@@ -292,10 +305,10 @@ export default function WhatIfPage() {
                 type="button"
                 onClick={handleRunWhatIf}
                 disabled={running}
-                className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/40 bg-cyan-500/20 px-5 py-3 font-[Orbitron] text-xs font-bold uppercase tracking-widest text-cyan-100 transition hover:bg-cyan-500/30 disabled:opacity-50"
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-cyan-400/50 bg-cyan-500/20 px-5 py-2.5 font-[Orbitron] text-xs font-bold uppercase tracking-wider text-cyan-100 transition hover:bg-cyan-500/30 disabled:opacity-50"
               >
                 <Play className="h-4 w-4" />
-                {running ? 'EVALUATING SCM...' : 'RUN WHAT-IF'}
+                {running ? 'PROPAGATING...' : 'RUN WHAT-IF'}
               </button>
             </div>
           </div>
@@ -306,47 +319,34 @@ export default function WhatIfPage() {
             </div>
           )}
 
-          {/* SIMULATION RESULT DISPLAY */}
+          {/* SIMULATION RESULTS VIEW */}
           {whatIfResult && (
-            <div className="mt-6 space-y-5 rounded-2xl border border-cyan-400/30 bg-slate-950/50 p-5">
-              {/* TOP STATUS BAR */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-slate-900 px-3 py-1.5 font-mono text-xs">
-                    <span className="text-white/40">Current: </span>
-                    <strong className="text-cyan-200">{whatIfResult.decision?.current}</strong>
+            <div className="mt-6 space-y-5 rounded-2xl border border-cyan-400/30 bg-slate-950/80 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <div className="text-[10px] uppercase tracking-[0.28em] text-cyan-200/60">
+                    Intervention Evaluated
                   </div>
-                  <ArrowRight className="h-4 w-4 text-white/40" />
-                  <div className="rounded-lg bg-slate-900 px-3 py-1.5 font-mono text-xs">
-                    <span className="text-white/40">What-If: </span>
-                    <strong
-                      className={
-                        whatIfResult.decision?.what_if === 'COMMIT' ? 'text-emerald-400' : 'text-cyan-200'
-                      }
-                    >
-                      {whatIfResult.decision?.what_if}
-                    </strong>
-                  </div>
+                  <h4 className="font-[Orbitron] text-lg font-bold text-white">
+                    {intervention === 'timing'
+                      ? `Maneuver Advanced by +${interventionValue} Hours`
+                      : `Delta-V Scaled by ${interventionValue}x`}
+                  </h4>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
-                    className={`rounded-full px-3 py-1 font-[Orbitron] text-[11px] font-bold tracking-wider ${
-                      whatIfResult.decision?.changed
-                        ? 'border border-amber-400/40 bg-amber-500/20 text-amber-200'
-                        : 'border border-white/10 bg-white/5 text-white/60'
-                    }`}
-                  >
-                    DECISION CHANGED: {whatIfResult.decision?.changed ? 'YES' : 'NO'}
-                  </span>
-                  <span
-                    className={`rounded-full px-3 py-1 font-[Orbitron] text-[11px] font-bold tracking-wider ${
+                    className={`rounded-lg border px-3 py-1 font-mono text-xs font-bold uppercase ${
                       whatIfResult.counterfactual_admissible
-                        ? 'border border-emerald-400/40 bg-emerald-500/20 text-emerald-200'
-                        : 'border border-rose-400/40 bg-rose-500/20 text-rose-200'
+                        ? 'border-emerald-400/40 bg-emerald-500/20 text-emerald-200'
+                        : 'border-rose-400/40 bg-rose-500/20 text-rose-200'
                     }`}
                   >
-                    {whatIfResult.counterfactual_admissible ? 'PHYSICALLY ADMISSIBLE' : 'INADMISSIBLE'}
+                    {whatIfResult.counterfactual_admissible ? 'ADMISSIBLE (PASS)' : 'SHIELD VIOLATION'}
+                  </span>
+
+                  <span className="rounded-lg border border-white/10 bg-white/5 px-3 py-1 font-mono text-xs text-white/80">
+                    STATUS: {whatIfResult.operational_status || 'NOMINAL'}
                   </span>
                 </div>
               </div>
@@ -375,13 +375,14 @@ export default function WhatIfPage() {
                 </table>
               </div>
 
-              {/* NATURAL LANGUAGE EXPLANATION */}
+              {/* STRUCTURED CAUSAL MECHANISM ANALYSIS */}
               {whatIfResult.deterministic_explanation && (
-                <div className="rounded-xl border border-white/8 bg-white/5 p-4 text-xs leading-relaxed text-white/80">
-                  <strong className="block font-[Orbitron] text-xs uppercase tracking-wider text-cyan-300">
-                    Causal Mechanism Analysis:
-                  </strong>
-                  <p className="mt-2 text-white/75">{whatIfResult.deterministic_explanation.explanation}</p>
+                <div className="mt-4">
+                  <StructuredExplanationCard
+                    explanation={whatIfResult.deterministic_explanation}
+                    eventId={activeEventId}
+                    title="Causal Mechanics & What-If Sensitivity Analysis"
+                  />
                 </div>
               )}
             </div>

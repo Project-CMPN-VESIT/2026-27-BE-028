@@ -6,6 +6,19 @@ import torch.nn.functional as F
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Any, Optional
+from pathlib import Path
+ROOT_DIR = Path(__file__).resolve().parents[2]
+
+def resolve_resource_path(p: Any) -> str:
+    if not p:
+        return ""
+    p_str = str(p)
+    if os.path.exists(p_str):
+        return p_str
+    alt = ROOT_DIR / p_str
+    if alt.exists():
+        return str(alt)
+    return p_str
 
 from .base_adapter import ResearchModelAdapter
 from .architectures import (
@@ -28,12 +41,12 @@ class GRUAdapter(ResearchModelAdapter):
         self.scaler_path = config["models"]["gru"].get("scaler", "resources/NeuroSymbolic_LSTM_scaler.pkl")
 
     def load(self, checkpoint_path: Optional[str] = None) -> None:
-        ckpt_path = checkpoint_path or self.config["models"]["gru"]["checkpoint"]
+        ckpt_path = resolve_resource_path(checkpoint_path or self.config["models"]["gru"]["checkpoint"])
         self.model = SatelliteGRU(input_size=len(self.feature_names), hidden_size=128, num_layers=2, dropout=0.3)
         state_dict = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.model.load_state_dict(state_dict)
 
-        scaler_file = self.config["models"]["gru"].get("scaler", self.scaler_path)
+        scaler_file = resolve_resource_path(self.config["models"]["gru"].get("scaler", self.scaler_path))
         if os.path.exists(scaler_file):
             self.scaler = joblib.load(scaler_file)
             if hasattr(self.scaler, "feature_names_in_") and self.scaler.feature_names_in_ is not None:
@@ -117,12 +130,12 @@ class LSTMAdapter(ResearchModelAdapter):
         self.scaler_path = config["models"]["lstm"].get("scaler", "resources/NeuroSymbolic_LSTM_scaler.pkl")
 
     def load(self, checkpoint_path: Optional[str] = None) -> None:
-        ckpt_path = checkpoint_path or self.config["models"]["lstm"]["checkpoint"]
+        ckpt_path = resolve_resource_path(checkpoint_path or self.config["models"]["lstm"]["checkpoint"])
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.feature_names = ckpt.get("feature_columns", self.feature_names)
         
         # Load the original training fitted scaler
-        scaler_file = self.config["models"]["lstm"].get("scaler", self.scaler_path)
+        scaler_file = resolve_resource_path(self.config["models"]["lstm"].get("scaler", self.scaler_path))
         if not os.path.exists(scaler_file):
             raise FileNotFoundError(f"Original LSTM scaler not found at: {scaler_file}")
         self.scaler = joblib.load(scaler_file)
@@ -216,13 +229,13 @@ class TCNAdapter(ResearchModelAdapter):
         self.scaler_path = config["models"]["tcn"].get("scaler", "resources/NeuroSymbolic_LSTM_scaler.pkl")
 
     def load(self, checkpoint_path: Optional[str] = None) -> None:
-        ckpt_path = checkpoint_path or self.config["models"]["tcn"]["checkpoint"]
+        ckpt_path = resolve_resource_path(checkpoint_path or self.config["models"]["tcn"]["checkpoint"])
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.model = SatelliteTCN(n_features=len(self.feature_names))
         sd = ckpt["model_state_dict"] if "model_state_dict" in ckpt else ckpt
         self.model.load_state_dict(sd)
 
-        scaler_file = self.config["models"]["tcn"].get("scaler", self.scaler_path)
+        scaler_file = resolve_resource_path(self.config["models"]["tcn"].get("scaler", self.scaler_path))
         if os.path.exists(scaler_file):
             self.scaler = joblib.load(scaler_file)
             if hasattr(self.scaler, "feature_names_in_") and self.scaler.feature_names_in_ is not None:
@@ -306,12 +319,12 @@ class TransformerAdapter(ResearchModelAdapter):
         self.scaler_path = config["models"]["transformer"].get("scaler", "resources/NeuroSymbolic_LSTM_scaler.pkl")
 
     def load(self, checkpoint_path: Optional[str] = None) -> None:
-        ckpt_path = checkpoint_path or self.config["models"]["transformer"]["checkpoint"]
+        ckpt_path = resolve_resource_path(checkpoint_path or self.config["models"]["transformer"]["checkpoint"])
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.model = SatelliteCausalTransformer(input_size=len(self.feature_names), d_model=128, n_heads=4, num_layers=2, ff_dim=256, dropout=0.3)
         self.model.load_state_dict(ckpt["model_state_dict"])
 
-        scaler_file = self.config["models"]["transformer"].get("scaler", self.scaler_path)
+        scaler_file = resolve_resource_path(self.config["models"]["transformer"].get("scaler", self.scaler_path))
         if os.path.exists(scaler_file):
             self.scaler = joblib.load(scaler_file)
             if hasattr(self.scaler, "feature_names_in_") and self.scaler.feature_names_in_ is not None:
@@ -393,7 +406,7 @@ class PatchTSTAdapter(ResearchModelAdapter):
         self.threshold = config["models"]["patchtst"].get("decision_threshold", 0.50)
 
     def load(self, checkpoint_path: Optional[str] = None) -> None:
-        ckpt_path = checkpoint_path or self.config["models"]["patchtst"]["checkpoint"]
+        ckpt_path = resolve_resource_path(checkpoint_path or self.config["models"]["patchtst"]["checkpoint"])
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.scaler = ckpt["scaler"]
         self.feature_names = ckpt.get("feature_cols", self.feature_names)
@@ -478,7 +491,7 @@ class XGBoostAdapter(ResearchModelAdapter):
         self.threshold = config["models"]["xgboost"].get("decision_threshold", 0.50)
 
     def load(self, checkpoint_path: Optional[str] = None) -> None:
-        ckpt_path = checkpoint_path or self.config["models"]["xgboost"]["checkpoint"]
+        ckpt_path = resolve_resource_path(checkpoint_path or self.config["models"]["xgboost"]["checkpoint"])
         ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.model = ckpt["xgboost_model"]
         self.feature_names = ckpt.get("feature_columns", self.feature_names)

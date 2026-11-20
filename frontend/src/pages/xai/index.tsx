@@ -8,8 +8,10 @@ import {
   requestXaiExplanation,
   type XaiGlobalItem,
   type XaiEventItem,
+  type StructuredExplanation,
 } from '../../services/api/causalXai';
 import { useMissionStore } from '../../store/missionStore';
+import { StructuredExplanationCard } from '../../components/ui/StructuredExplanationCard';
 
 export default function XaiPage() {
   const { events, selectedEvent, selectEvent, loadEvents } = useMissionStore();
@@ -20,7 +22,7 @@ export default function XaiPage() {
   const [loading, setLoading] = useState(true);
 
   // Explanation request state
-  const [explanation, setExplanation] = useState<any>(null);
+  const [explanation, setExplanation] = useState<StructuredExplanation | null>(null);
   const [explanationLoading, setExplanationLoading] = useState(false);
   const [explanationError, setExplanationError] = useState<string | null>(null);
 
@@ -32,8 +34,9 @@ export default function XaiPage() {
 
   useEffect(() => {
     if (selectedEvent?.id) {
-      setActiveEventId(selectedEvent.id);
-      setEventInput(selectedEvent.id);
+      const clean = String(selectedEvent.id).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+      setActiveEventId(clean);
+      setEventInput(clean);
     }
   }, [selectedEvent?.id]);
 
@@ -60,8 +63,8 @@ export default function XaiPage() {
   }, [activeEventId]);
 
   const handleSelectEvent = (id: string | number) => {
-    const raw = String(id).trim();
-    const num = Math.max(1, Math.min(3000, parseInt(raw, 10) || 1));
+    const raw = String(id).replace(/^EVT-/i, '').replace(/^#/i, '').trim();
+    const num = Math.max(1, Math.min(6150, parseInt(raw, 10) || 1));
     const strId = String(num);
     setActiveEventId(strId);
     setEventInput(strId);
@@ -103,7 +106,7 @@ export default function XaiPage() {
                 <input
                   type="number"
                   min="1"
-                  max="3000"
+                  max="6150"
                   value={eventInput}
                   onChange={(e) => setEventInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSelectEvent(eventInput)}
@@ -132,6 +135,17 @@ export default function XaiPage() {
                 }`}
               >
                 #1 (Active Wait)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSelectEvent(2080)}
+                className={`rounded-full px-3 py-1 transition ${
+                  activeEventId === '2080'
+                    ? 'border border-cyan-400/50 bg-cyan-400/20 text-cyan-200'
+                    : 'border border-white/10 bg-white/5 text-white/60 hover:text-white'
+                }`}
+              >
+                #2080 (Operational)
               </button>
               <button
                 type="button"
@@ -217,21 +231,12 @@ export default function XaiPage() {
           )}
 
           {explanation && (
-            <div className="mt-5 space-y-3 rounded-2xl border border-cyan-400/30 bg-slate-950/60 p-5">
-              <div className="flex items-center justify-between">
-                <span className="rounded-full bg-cyan-500/20 px-3 py-1 font-mono text-xs font-semibold text-cyan-300">
-                  STATUS: {explanation.status?.toUpperCase() || 'VERIFIED'}
-                </span>
-                <span className="text-xs text-white/40">Event #{activeEventId} Rationale</span>
-              </div>
-              <div className="font-semibold text-white">{explanation.message || 'Decision Explanation:'}</div>
-              <p className="text-sm leading-relaxed text-white/80">
-                {explanation.reason || explanation.explanation}
-              </p>
-              <div className="text-[11px] text-white/45 italic">
-                {explanation.disclaimer ||
-                  'Quantitative attribution and physics checks remain authoritative over natural-language outputs.'}
-              </div>
+            <div className="mt-5">
+              <StructuredExplanationCard
+                explanation={explanation}
+                eventId={activeEventId}
+                title="Explainable AI & Multi-Model Flight Rationale"
+              />
             </div>
           )}
         </GlassPanel>
